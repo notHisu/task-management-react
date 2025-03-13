@@ -1,19 +1,10 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import { login as loginApi } from "./api/authApi";
-import { User } from "./types";
-import { UserLoginSchema } from "./schemas/userSchema";
+import { AuthState } from "../types/Auth";
+import { UserLoginSchema } from "../schemas/userSchema";
+import { login as loginApi } from "../api/authApi";
 
-export interface AuthState {
-  user: User | null;
-  isLoading: boolean;
-  error: string | null;
-  login: (credentials: UserLoginSchema) => Promise<void>;
-  logout: () => void;
-  clearErrors: () => void;
-}
-
-const useAuthStore = create<AuthState>()(
+export const useAuthStore = create<AuthState>()(
   persist(
     (set) => ({
       user: null,
@@ -86,5 +77,3 @@ const useAuthStore = create<AuthState>()(
     }
   )
 );
-
-export default useAuthStore;

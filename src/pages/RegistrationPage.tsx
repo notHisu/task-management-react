@@ -1,4 +1,4 @@
-import RegisterForm from "../components/RegisterForm";
+import RegisterForm from "../components/common/FormElements/RegisterForm";
 import { Link } from "react-router-dom";
 
 function RegistrationPage() {

@@ -1,13 +1,13 @@
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { userLoginSchema, UserLoginSchema } from "../schemas/userSchema";
-import { useNavigate } from "react-router-dom";
-import useAuthStore from "../store";
 import { useEffect, useState } from "react";
-import Button from "./Button";
-import FormField from "./FormField";
-import AuthError from "./AuthError";
+import { useForm } from "react-hook-form";
+import { userLoginSchema, UserLoginSchema } from "../../../schemas/userSchema";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useAuthStore } from "../../../store/store";
+import { useNavigate } from "react-router-dom";
 import FormContainer from "./FormContainer";
+import AuthError from "../AuthError";
+import FormField from "./FormField";
+import Button from "../Button";
 
 export default function LoginForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);

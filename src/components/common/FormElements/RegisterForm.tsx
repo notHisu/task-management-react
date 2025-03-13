@@ -1,12 +1,12 @@
 import { useForm } from "react-hook-form";
-import { register as registerApi } from "../api/authApi";
+import { register as registerApi } from "../../../api/authApi";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { userCreateSchema } from "../schemas/userSchema";
+import { userCreateSchema } from "../../../schemas/userSchema";
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
-import Button from "./Button";
+import Button from "../Button";
 import FormField from "./FormField";
-import AuthError from "./AuthError";
+import AuthError from "../AuthError";
 import FormContainer from "./FormContainer";
 import { z } from "zod";
 
