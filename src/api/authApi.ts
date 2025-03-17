@@ -21,6 +21,7 @@ export const login = async (
 ): Promise<ApiResponse<UserLoginSchema>> => {
   try {
     const response = await authApi.post("/login", userData);
+    console.log("Login response:", response.data);
     return {
       data: response.data,
       success: true,

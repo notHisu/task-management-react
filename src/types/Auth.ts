@@ -16,7 +16,10 @@ export interface AuthState {
   user: User | null;
   isLoading: boolean;
   error: string | null;
-  login: (credentials: UserLoginSchema) => Promise<void>;
+  login: (
+    credentials: UserLoginSchema,
+    loginFn: (creds: UserLoginSchema) => Promise<AuthTokens>
+  ) => Promise<void>;
   logout: () => void;
   clearErrors: () => void;
 }

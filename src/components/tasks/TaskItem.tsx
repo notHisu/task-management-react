@@ -1,6 +1,6 @@
-import { useNavigate } from "react-router-dom";
 import { Task } from "../../types/Task";
 import { Label } from "../../types/Label";
+import { Category } from "../../types/Category";
 import {
   FaCalendarAlt,
   FaFolder,
@@ -12,11 +12,23 @@ import {
 interface TaskItemProps {
   task: Task;
   labels?: Label[];
+  categories?: Category[]; // Add categories prop
   onToggleComplete: (taskId: number) => void;
 }
 
-export function TaskItem({ task, labels, onToggleComplete }: TaskItemProps) {
-  const navigate = useNavigate();
+export function TaskItem({
+  task,
+  labels,
+  categories,
+  onToggleComplete,
+}: TaskItemProps) {
+  // Find category name based on categoryId
+  const getCategoryName = (): string => {
+    if (!categories) return "Uncategorized";
+
+    const category = categories.find((cat) => cat.id === task.categoryId);
+    return category?.name || "Uncategorized";
+  };
 
   const formatDate = (dateString?: string) => {
     if (!dateString) return "";
@@ -42,10 +54,7 @@ export function TaskItem({ task, labels, onToggleComplete }: TaskItemProps) {
   };
 
   return (
-    <div
-      className="bg-white rounded-lg shadow-sm p-4 hover:shadow-md transition-shadow duration-200"
-      onClick={() => navigate(`/tasks/${task.id}`)}
-    >
+    <div className="bg-white rounded-lg shadow-sm p-4 hover:shadow-md transition-shadow duration-200">
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-3">
           <button
@@ -79,10 +88,10 @@ export function TaskItem({ task, labels, onToggleComplete }: TaskItemProps) {
 
       <div className="mt-3 ml-7 flex items-center justify-between">
         <div className="flex flex-wrap items-center gap-2">
-          {/* Category */}
+          {/* Category - Updated to use getCategoryName() */}
           <span className="px-2 py-0.5 text-xs rounded bg-gray-100 text-gray-800 flex items-center gap-1">
             <FaFolder className="text-gray-400" />
-            {task.category?.name || "Uncategorized"}
+            {getCategoryName()}
           </span>
 
           {/* Labels */}

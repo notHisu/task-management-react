@@ -1,4 +1,5 @@
 import axios from "axios";
+import { getCookie } from "../../utils/cookieUtils";
 import { useAuthStore } from "../../store/store";
 
 // Create base axios instance
@@ -12,17 +13,23 @@ const apiClient = axios.create({
 // Request interceptor
 apiClient.interceptors.request.use(
   (config) => {
-    // Only log in development
-    if (import.meta.env.DEV) {
-      console.log("Request:", config.method?.toUpperCase(), config.url);
+    // Get token from cookie first, fallback to store
+    const accessToken = getCookie("access_token");
+    const tokenType = getCookie("token_type") || "Bearer";
+
+    if (accessToken) {
+      config.headers.Authorization = `${tokenType} ${accessToken}`;
+    } else {
+      // Fallback to store (for backward compatibility)
+      const state = useAuthStore.getState();
+      const storeToken = state.user?.token?.accessToken;
+      if (storeToken) {
+        config.headers.Authorization = `Bearer ${storeToken}`;
+      }
     }
 
-    // Add auth token if available
-    const state = useAuthStore.getState();
-    const token = state.user?.token?.accessToken;
-
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
+    if (import.meta.env.DEV) {
+      console.log("Request:", config.method?.toUpperCase(), config.url);
     }
 
     return config;
@@ -39,6 +46,7 @@ apiClient.interceptors.response.use(
     if (import.meta.env.DEV) {
       console.log("Response:", response.status, response.config.url);
     }
+    console.log("API Response:", response.status, response.data);
     return response;
   },
   (error) => {
@@ -49,6 +57,11 @@ apiClient.interceptors.response.use(
         useAuthStore.getState().logout();
       }
     }
+    console.error(
+      "API Error Response:",
+      error.response?.status,
+      error.response?.data || error.message
+    );
     return Promise.reject(error);
   }
 );

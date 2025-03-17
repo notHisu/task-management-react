@@ -1,4 +1,4 @@
-import { Category } from "./Category";
+import { TaskFormData } from "../schemas/taskSchema";
 
 export interface Task {
   id?: number;
@@ -6,7 +6,7 @@ export interface Task {
   description?: string;
   isCompleted?: boolean;
   userId?: number;
-  category?: Category;
+  categoryId: number;
   taskLabels?: TaskLabel[];
   createdAt?: string;
 }
@@ -14,4 +14,16 @@ export interface Task {
 export interface TaskLabel {
   taskId?: number;
   labelId?: number;
+}
+
+export interface TaskUpdate {
+  id?: number;
+  title?: string;
+  description?: string;
+  isCompleted?: boolean;
+  categoryId: number;
+}
+
+export interface TaskWithLabelsFormData extends TaskFormData {
+  labelIds?: number[];
 }

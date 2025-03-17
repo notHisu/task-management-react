@@ -1,11 +1,15 @@
 import { useState } from "react";
-import { useTasks } from "../hooks/useTasks";
+import { useTasks, useTaskToggleCompletion } from "../hooks/useTasks";
+import { useTaskWithLabelsCreate } from "../hooks/useTaskWithLabelsCreate";
 import { useCategories } from "../hooks/useCategories";
 import { useLabels } from "../hooks/useLabels";
 import { TaskList } from "../components/tasks/TaskList";
 import { TaskFilters } from "../components/tasks/TaskFilters";
 import { TaskSorter } from "../components/tasks/TaskSorter";
+import { TaskForm } from "../components/tasks/TaskForm";
+import { Modal } from "../components/common/Modal";
 import { FaTasks, FaPlus } from "react-icons/fa";
+import { TaskFormData } from "../schemas/taskSchema";
 
 export function TasksPage() {
   const [selectedCategory, setSelectedCategory] = useState<number | null>(null);
@@ -13,6 +17,7 @@ export function TasksPage() {
   const [selectedLabels, setSelectedLabels] = useState<number[]>([]);
   const [sortBy, setSortBy] = useState<"date" | "status">("date");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   // Fetch data from APIs using hooks
   const {
@@ -22,8 +27,11 @@ export function TasksPage() {
   } = useTasks();
 
   const { data: labels, isLoading: labelsLoading } = useLabels();
-
   const { data: categories, isLoading: categoriesLoading } = useCategories();
+
+  const toggleTaskCompletionMutation = useTaskToggleCompletion();
+
+  const taskWithLabelsCreateMutation = useTaskWithLabelsCreate();
 
   // Handler for toggling label selection
   const handleLabelToggle = (labelId: number) => {
@@ -40,10 +48,7 @@ export function TasksPage() {
   const filteredTasks = tasks
     ? tasks.filter((task) => {
         // Check category - using task.category.id (not categoryId)
-        if (
-          selectedCategory !== null &&
-          task.category?.id !== selectedCategory
-        ) {
+        if (selectedCategory !== null && task.categoryId !== selectedCategory) {
           return false;
         }
 
@@ -93,8 +98,7 @@ export function TasksPage() {
 
   // Handler to toggle task completion
   const handleToggleComplete = (taskId: number) => {
-    console.log("Toggle task completion:", taskId);
-    // Will implement actual API call in a future step
+    toggleTaskCompletionMutation.mutate(taskId);
   };
 
   // Handler to clear filters
@@ -102,6 +106,21 @@ export function TasksPage() {
     setSelectedCategory(null);
     setShowCompleted(true);
     setSelectedLabels([]);
+  };
+
+  // Updated handler for task creation
+  const handleCreateTask = (data: TaskFormData) => {
+    // Add console.log to debug
+    console.log("Submitting task data:", data);
+
+    taskWithLabelsCreateMutation.mutate(data, {
+      onSuccess: () => {
+        setIsModalOpen(false);
+      },
+      onError: (error) => {
+        console.error("Error creating task:", error);
+      },
+    });
   };
 
   return (
@@ -113,9 +132,7 @@ export function TasksPage() {
         </div>
         <button
           className="bg-indigo-600 hover:bg-indigo-700 text-white py-2 px-4 rounded-md text-sm font-medium transition-colors flex items-center gap-2"
-          onClick={() => {
-            console.log("Create task clicked");
-          }}
+          onClick={() => setIsModalOpen(true)}
         >
           <FaPlus /> Create Task
         </button>
@@ -144,15 +161,25 @@ export function TasksPage() {
         />
       </div>
 
-      {/* TaskList Component */}
+      {/* TaskList Component - Add categories prop */}
       <TaskList
         tasks={filteredAndSortedTasks}
         labels={labels}
+        categories={categories} // Add this line
         isLoading={tasksLoading}
         isError={tasksError}
         onToggleComplete={handleToggleComplete}
         onClearFilters={handleClearFilters}
       />
+
+      {/* Task Creation Modal */}
+      <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)}>
+        <h2 className="text-xl font-bold mb-4">Create Task</h2>
+        <TaskForm
+          onSubmit={handleCreateTask}
+          isLoading={taskWithLabelsCreateMutation.isPending}
+        />
+      </Modal>
     </>
   );
 }

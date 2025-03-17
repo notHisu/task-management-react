@@ -8,6 +8,7 @@ import FormContainer from "./FormContainer";
 import AuthError from "../AuthError";
 import FormField from "./FormField";
 import Button from "../Button";
+import { useAuth } from "../../../hooks/useAuth";
 
 export default function LoginForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -20,7 +21,13 @@ export default function LoginForm() {
     resolver: zodResolver(userLoginSchema),
   });
 
-  const { login, user, error: authError, clearErrors } = useAuthStore();
+  const {
+    login: storeLogin,
+    user,
+    error: authError,
+    clearErrors,
+  } = useAuthStore();
+  const { login: loginMutation } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -34,7 +41,8 @@ export default function LoginForm() {
     clearErrors();
 
     try {
-      await login(data);
+      // Pass the mutation function to the store
+      await storeLogin(data, (creds) => loginMutation.mutateAsync(creds));
     } catch (error) {
       console.error("Login error:", error);
     } finally {
