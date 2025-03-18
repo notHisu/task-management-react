@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import apiClient from "../services/api/axiosConfig";
-import { Task } from "../types/Task";
+import { Task, TaskWithLabelsFormData } from "../types/Task";
+import { toast } from "react-toastify";
 
 export const useTasks = () => {
   return useQuery({
@@ -24,6 +25,9 @@ export const useTaskToggleCompletion = () => {
 
       const updatedData = {
         isCompleted: !currentTask.isCompleted,
+        categoryId: currentTask.categoryId,
+        title: currentTask.title,
+        description: currentTask.description,
       };
 
       const url = `/api/Task/${taskId}`;
@@ -36,6 +40,84 @@ export const useTaskToggleCompletion = () => {
     },
     onError: (error) => {
       console.error("Failed to toggle task completion:", error);
+    },
+  });
+};
+
+// New hook for editing tasks
+export const useTaskEdit = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      taskId,
+      data,
+    }: {
+      taskId: number;
+      data: TaskWithLabelsFormData;
+    }) => {
+      // Step 1: Update the task
+      const { labelIds, ...taskData } = data;
+      const taskResponse = await apiClient.put<Task>(
+        `/api/Task/${taskId}`,
+        taskData
+      );
+      const updatedTask = taskResponse.data;
+
+      // Step 2: Handle labels if provided
+      if (labelIds && updatedTask.id) {
+        // First delete existing labels
+        const currentLabels = await apiClient.get(`/api/TaskLabel/${taskId}`);
+        if (currentLabels.data && currentLabels.data.length > 0) {
+          await Promise.all(
+            currentLabels.data.map(async (label: any) =>
+              // Use the correct API endpoint format for deleting task labels
+              apiClient.delete(`/api/TaskLabel/${taskId}/${label.labelId}`)
+            )
+          );
+        }
+
+        // Add new labels
+        const labelPromises = labelIds.map(
+          async (labelId) =>
+            await apiClient.post("/api/TaskLabel", {
+              taskId: updatedTask.id,
+              labelId,
+            })
+        );
+
+        await Promise.all(labelPromises);
+      }
+
+      return updatedTask;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["tasks"] });
+      toast.success("Task updated successfully");
+    },
+    onError: (error) => {
+      console.error("Failed to update task:", error);
+      toast.error("Failed to update task");
+    },
+  });
+};
+
+// New hook for deleting tasks
+export const useTaskDelete = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (taskId: number) => {
+      await apiClient.delete(`/api/Task/${taskId}`);
+      return taskId;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["tasks"] });
+      toast.success("Task deleted successfully");
+    },
+    onError: (error) => {
+      console.error("Failed to delete task:", error);
+      toast.error("Failed to delete task");
     },
   });
 };

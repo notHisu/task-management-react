@@ -5,9 +5,11 @@ import "react-toastify/dist/ReactToastify.css";
 import RegistrationPage from "./pages/RegistrationPage";
 import LoginPage from "./pages/LoginPage";
 import DashboardPage from "./pages/DashboardPage";
+import ProfilePage from "./pages/ProfilePage"; // Add this import
 import TermsPage from "./pages/TermsPage";
 import PrivacyPage from "./pages/PrivacyPage";
 import { TasksPage } from "./pages/TasksPage";
+import { TaskDetailPage } from "./pages/TaskDetailPage";
 import { AppLayout } from "./components/layout/AppLayout";
 import { ProtectedRoute } from "./components/auth/ProtectedRoute";
 
@@ -46,11 +48,31 @@ function App() {
               </ProtectedRoute>
             }
           />
+          <Route
+            path="/profile" // Add profile route
+            element={
+              <ProtectedRoute>
+                <AppLayout>
+                  <ProfilePage />
+                </AppLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/tasks/:taskId"
+            element={
+              <ProtectedRoute>
+                <AppLayout>
+                  <TaskDetailPage />
+                </AppLayout>
+              </ProtectedRoute>
+            }
+          />
 
           <Route path="*" element={<RegistrationPage />} />
         </Routes>
       </Router>
-      <ToastContainer position="top-right" autoClose={3000} />
+      <ToastContainer position="bottom-right" autoClose={3000} />
     </QueryClientProvider>
   );
 }

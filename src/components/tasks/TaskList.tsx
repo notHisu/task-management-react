@@ -14,6 +14,11 @@ interface TaskListProps {
   isError: boolean;
   onToggleComplete: (taskId: number) => void;
   onClearFilters?: () => void;
+  onCreateTask?: () => void;
+  onEditClick: (task: Task) => void;
+  onDeleteClick: (task: Task) => void;
+  hasActiveFilters?: boolean;
+  allTasksCount?: number;
 }
 
 export function TaskList({
@@ -24,6 +29,11 @@ export function TaskList({
   isError,
   onToggleComplete,
   onClearFilters,
+  onCreateTask,
+  onEditClick,
+  onDeleteClick,
+  hasActiveFilters = false,
+  allTasksCount = 0,
 }: TaskListProps) {
   if (isLoading) {
     return <LoadingState />;
@@ -34,7 +44,14 @@ export function TaskList({
   }
 
   if (tasks.length === 0) {
-    return <EmptyState onClearFilters={onClearFilters} />;
+    return (
+      <EmptyState
+        onClearFilters={onClearFilters}
+        onCreateTask={onCreateTask}
+        hasActiveFilters={hasActiveFilters}
+        noTasksAtAll={allTasksCount === 0}
+      />
+    );
   }
 
   return (
@@ -46,6 +63,8 @@ export function TaskList({
           labels={labels}
           categories={categories}
           onToggleComplete={onToggleComplete}
+          onEditClick={onEditClick}
+          onDeleteClick={onDeleteClick}
         />
       ))}
     </div>

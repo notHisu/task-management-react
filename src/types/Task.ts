@@ -9,6 +9,8 @@ export interface Task {
   categoryId: number;
   taskLabels?: TaskLabel[];
   createdAt?: string;
+  dueDate?: string;
+  priority?: string;
 }
 
 export interface TaskLabel {

@@ -1,5 +1,10 @@
 import { useState } from "react";
-import { useTasks, useTaskToggleCompletion } from "../hooks/useTasks";
+import {
+  useTasks,
+  useTaskToggleCompletion,
+  useTaskEdit,
+  useTaskDelete,
+} from "../hooks/useTasks";
 import { useTaskWithLabelsCreate } from "../hooks/useTaskWithLabelsCreate";
 import { useCategories } from "../hooks/useCategories";
 import { useLabels } from "../hooks/useLabels";
@@ -7,9 +12,12 @@ import { TaskList } from "../components/tasks/TaskList";
 import { TaskFilters } from "../components/tasks/TaskFilters";
 import { TaskSorter } from "../components/tasks/TaskSorter";
 import { TaskForm } from "../components/tasks/TaskForm";
+import { EditTaskForm } from "../components/tasks/EditTaskForm";
 import { Modal } from "../components/common/Modal";
+import { ConfirmationModal } from "../components/common/ConfirmationModal";
 import { FaTasks, FaPlus } from "react-icons/fa";
 import { TaskFormData } from "../schemas/taskSchema";
+import { Task } from "../types/Task";
 
 export function TasksPage() {
   const [selectedCategory, setSelectedCategory] = useState<number | null>(null);
@@ -18,6 +26,11 @@ export function TasksPage() {
   const [sortBy, setSortBy] = useState<"date" | "status">("date");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedTask, setSelectedTask] = useState<Task | null>(null);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [formChanged, setFormChanged] = useState(false);
 
   // Fetch data from APIs using hooks
   const {
@@ -30,8 +43,9 @@ export function TasksPage() {
   const { data: categories, isLoading: categoriesLoading } = useCategories();
 
   const toggleTaskCompletionMutation = useTaskToggleCompletion();
-
   const taskWithLabelsCreateMutation = useTaskWithLabelsCreate();
+  const taskEditMutation = useTaskEdit();
+  const taskDeleteMutation = useTaskDelete();
 
   // Handler for toggling label selection
   const handleLabelToggle = (labelId: number) => {
@@ -47,35 +61,32 @@ export function TasksPage() {
   // Filter tasks based on selected category, completion status, and labels
   const filteredTasks = tasks
     ? tasks.filter((task) => {
-        // Check category - using task.category.id (not categoryId)
-        if (selectedCategory !== null && task.categoryId !== selectedCategory) {
-          return false;
-        }
+        // Check if task matches search term
+        const matchesSearch = searchTerm
+          ? task.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            task.description?.toLowerCase().includes(searchTerm.toLowerCase())
+          : true;
 
-        // Check completion status
-        if (!showCompleted && task.isCompleted) {
-          return false;
-        }
+        // Check if task matches category filter
+        const matchesCategory =
+          selectedCategory === null || task.categoryId === selectedCategory;
 
-        // Check labels - if any labels are selected, the task must have at least one
-        if (selectedLabels.length > 0) {
-          // If task has no labels or taskLabels array is empty, filter it out
-          if (!task.taskLabels || task.taskLabels.length === 0) {
-            return false;
-          }
+        // Check if task matches completion status filter
+        const matchesCompletionStatus = showCompleted || !task.isCompleted;
 
-          // Check if the task has any of the selected labels
-          const taskLabelIds = task.taskLabels.map((tl) => tl.labelId);
-          const hasMatchingLabel = selectedLabels.some((labelId) =>
-            taskLabelIds.includes(labelId)
+        // Check if task contains all selected labels
+        const matchesLabels =
+          selectedLabels.length === 0 ||
+          selectedLabels.every((labelId) =>
+            task.taskLabels?.some((tl) => tl.labelId === labelId)
           );
 
-          if (!hasMatchingLabel) {
-            return false;
-          }
-        }
-
-        return true;
+        return (
+          matchesSearch &&
+          matchesCategory &&
+          matchesCompletionStatus &&
+          matchesLabels
+        );
       })
     : [];
 
@@ -95,6 +106,12 @@ export function TasksPage() {
       }
     }
   });
+
+  const hasActiveFilters =
+    selectedCategory !== null ||
+    selectedLabels.length > 0 ||
+    !showCompleted ||
+    searchTerm.trim() !== "";
 
   // Handler to toggle task completion
   const handleToggleComplete = (taskId: number) => {
@@ -123,6 +140,53 @@ export function TasksPage() {
     });
   };
 
+  // New handler for task edit
+  const handleEditTask = (data: TaskFormData) => {
+    if (!selectedTask) return;
+
+    taskEditMutation.mutate(
+      {
+        taskId: selectedTask.id!,
+        data,
+      },
+      {
+        onSuccess: () => {
+          setIsEditModalOpen(false);
+          setSelectedTask(null);
+        },
+      }
+    );
+  };
+
+  // New handler for task delete
+  const handleDeleteTask = () => {
+    if (!selectedTask) return;
+
+    taskDeleteMutation.mutate(selectedTask.id!, {
+      onSuccess: () => {
+        setIsDeleteModalOpen(false);
+        setSelectedTask(null);
+      },
+    });
+  };
+
+  // Handle opening edit modal
+  const handleEditClick = (task: Task) => {
+    setSelectedTask(task);
+    setIsEditModalOpen(true);
+  };
+
+  // Handle opening delete modal
+  const handleDeleteClick = (task: Task) => {
+    setSelectedTask(task);
+    setIsDeleteModalOpen(true);
+  };
+
+  // Add search handler in TasksPage
+  const handleSearch = (query: string) => {
+    setSearchTerm(query);
+  };
+
   return (
     <>
       <div className="flex justify-between items-center mb-8">
@@ -146,13 +210,15 @@ export function TasksPage() {
         selectedCategory={selectedCategory}
         selectedLabels={selectedLabels}
         showCompleted={showCompleted}
+        searchTerm={searchTerm}
         onCategoryChange={setSelectedCategory}
         onCompletedChange={setShowCompleted}
         onLabelToggle={handleLabelToggle}
+        onSearch={handleSearch}
       />
 
       {/* TaskSorter Component - Add this below the filters */}
-      <div className="flex justify-end mb-4">
+      <div className="flex justify-end my-4">
         <TaskSorter
           sortBy={sortBy}
           sortOrder={sortOrder}
@@ -160,16 +226,20 @@ export function TasksPage() {
           onSortOrderChange={setSortOrder}
         />
       </div>
-
       {/* TaskList Component - Add categories prop */}
       <TaskList
         tasks={filteredAndSortedTasks}
         labels={labels}
-        categories={categories} // Add this line
+        categories={categories}
         isLoading={tasksLoading}
         isError={tasksError}
         onToggleComplete={handleToggleComplete}
         onClearFilters={handleClearFilters}
+        onCreateTask={() => setIsModalOpen(true)}
+        onEditClick={handleEditClick}
+        onDeleteClick={handleDeleteClick}
+        hasActiveFilters={hasActiveFilters}
+        allTasksCount={tasks?.length || 0}
       />
 
       {/* Task Creation Modal */}
@@ -180,6 +250,59 @@ export function TasksPage() {
           isLoading={taskWithLabelsCreateMutation.isPending}
         />
       </Modal>
+
+      {/* Task Edit Modal */}
+      <Modal
+        isOpen={isEditModalOpen}
+        onClose={() => {
+          // Show confirmation if there are unsaved changes
+          if (formChanged) {
+            if (window.confirm("Discard unsaved changes?")) {
+              setIsEditModalOpen(false);
+              setSelectedTask(null);
+            }
+          } else {
+            setIsEditModalOpen(false);
+            setSelectedTask(null);
+          }
+        }}
+        title={`Edit Task: ${selectedTask?.title}`}
+        size="large"
+      >
+        {selectedTask && (
+          <EditTaskForm
+            initialData={selectedTask}
+            onSubmit={handleEditTask}
+            onCancel={() => setIsEditModalOpen(false)}
+            isLoading={taskEditMutation.isPending}
+          />
+        )}
+      </Modal>
+
+      {/* Task Delete Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={isDeleteModalOpen}
+        onClose={() => setIsDeleteModalOpen(false)}
+        onConfirm={handleDeleteTask}
+        title="Delete Task"
+        confirmText="Delete"
+        isLoading={taskDeleteMutation.isPending}
+      >
+        <p className="text-gray-700">
+          Are you sure you want to delete this task? This action cannot be
+          undone.
+        </p>
+        {selectedTask && (
+          <div className="mt-2 p-3 bg-gray-50 rounded border border-gray-200">
+            <p className="font-medium">{selectedTask.title}</p>
+            {selectedTask.description && (
+              <p className="text-sm text-gray-600 mt-1">
+                {selectedTask.description}
+              </p>
+            )}
+          </div>
+        )}
+      </ConfirmationModal>
     </>
   );
 }
