@@ -4,6 +4,7 @@ import { UserCreateSchema, UserLoginSchema } from "../schemas/userSchema";
 import { setCookie } from "../utils/cookieUtils";
 import apiClient from "../services/api/axiosConfig";
 import { AuthTokens, User } from "../types/Auth";
+import { toast } from "react-toastify";
 
 // API response type
 export interface ApiResponse<T> {
@@ -51,6 +52,12 @@ export function useAuth() {
         throw new Error(axiosError.response?.data?.message || "Login failed");
       }
     },
+    onSuccess: () => {
+      toast.success("Login successful");
+    },
+    onError: () => {
+      toast.error("Login failed");
+    },
   });
 
   // Register mutation
@@ -65,6 +72,12 @@ export function useAuth() {
           axiosError.response?.data?.message || "Registration failed"
         );
       }
+    },
+    onSuccess: () => {
+      toast.success("Registration successful");
+    },
+    onError: () => {
+      toast.error("Registration failed");
     },
   });
 

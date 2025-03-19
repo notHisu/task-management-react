@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useTaskComments, useAddComment } from "../../hooks/useTaskComments";
 import { CommentForm } from "./CommentForm";
 import { formatDistanceToNow } from "date-fns";
@@ -16,13 +16,14 @@ export function TaskComments({ taskId }: TaskCommentsProps) {
     null
   );
   const [activeDropdown, setActiveDropdown] = useState<number | null>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
   const { user } = useAuthStore();
 
   const { data: comments, isLoading, isError } = useTaskComments(taskId);
 
   const addCommentMutation = useAddComment();
 
-  const handleAddComment = async (content: string): Promise<void> => {
+  const handleAddComment = async (content: string): Promise<any> => {
     if (!content.trim()) return Promise.resolve();
 
     return addCommentMutation.mutateAsync({
@@ -31,9 +32,29 @@ export function TaskComments({ taskId }: TaskCommentsProps) {
     });
   };
 
-  const handleToggleDropdown = (commentId: number | null) => {
+  const handleToggleDropdown = (commentId: number) => {
     setActiveDropdown(activeDropdown === commentId ? null : commentId);
   };
+
+  const handleReplyClick = (commentId: number) => {
+    setExpandedCommentId(expandedCommentId === commentId ? null : commentId);
+    setActiveDropdown(null); // Close dropdown after clicking Reply
+  };
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node)
+      ) {
+        setActiveDropdown(null);
+      }
+    }
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   // Get initial letter for user avatar
   const getInitial = (name?: string, email?: string) => {
@@ -99,6 +120,7 @@ export function TaskComments({ taskId }: TaskCommentsProps) {
           comments.map((comment) => {
             const style = getCommentStyle(comment);
             const isCommentExpanded = expandedCommentId === comment.id;
+            const isDropdownOpen = activeDropdown === comment.id;
 
             return (
               <motion.div
@@ -141,22 +163,18 @@ export function TaskComments({ taskId }: TaskCommentsProps) {
 
                     {/* Dropdown menu */}
                     <AnimatePresence>
-                      {activeDropdown === comment.id && (
+                      {isDropdownOpen && (
                         <motion.div
+                          ref={dropdownRef}
                           initial={{ opacity: 0, scale: 0.95 }}
                           animate={{ opacity: 1, scale: 1 }}
                           exit={{ opacity: 0, scale: 0.95 }}
                           transition={{ duration: 0.1 }}
                           className="absolute right-0 mt-1 w-32 bg-white rounded-md shadow-lg z-10 py-1 border border-gray-200"
-                          onBlur={() => setActiveDropdown(null)}
                         >
                           <button
                             className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center"
-                            onClick={() =>
-                              setExpandedCommentId(
-                                isCommentExpanded ? null : comment.id!
-                              )
-                            }
+                            onClick={() => handleReplyClick(comment.id!)}
                           >
                             <FaReply size={12} className="mr-2" />
                             Reply

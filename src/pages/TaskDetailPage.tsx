@@ -2,7 +2,11 @@ import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useCategories } from "../hooks/useCategories";
 import { useLabels } from "../hooks/useLabels";
-import { useTaskEdit, useTaskDelete } from "../hooks/useTasks";
+import {
+  useTaskEdit,
+  useTaskDelete,
+  useTaskToggleCompletion,
+} from "../hooks/useTasks";
 import { TaskDetail } from "../components/tasks/TaskDetail";
 import { Modal } from "../components/common/Modal";
 import { ConfirmationModal } from "../components/common/ConfirmationModal";
@@ -25,6 +29,7 @@ export function TaskDetailPage() {
 
   const taskEditMutation = useTaskEdit();
   const taskDeleteMutation = useTaskDelete();
+  const taskToggleCompleeteMutation = useTaskToggleCompletion();
 
   // Handler for editing a task
   const handleEditTask = (data: TaskFormData) => {
@@ -69,6 +74,10 @@ export function TaskDetailPage() {
     setIsDeleteModalOpen(true);
   };
 
+  const handleTaskToggleCompletion = (taskId: number) => {
+    taskToggleCompleeteMutation.mutate(taskId);
+  };
+
   return (
     <>
       <TaskDetail
@@ -76,6 +85,7 @@ export function TaskDetailPage() {
         labels={labels}
         categories={categories}
         onEdit={handleEditClick}
+        onToggleCompletion={handleTaskToggleCompletion}
         onDelete={handleDeleteClick}
       />
 

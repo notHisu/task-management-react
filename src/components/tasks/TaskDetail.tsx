@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Task } from "../../types/Task";
 import { Label } from "../../types/Label";
 import { Category } from "../../types/Category";
@@ -18,18 +18,27 @@ import {
   FaClock,
   FaArrowLeft,
   FaCheck,
+  FaTimes,
+  FaPlus,
 } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 import Button from "../common/Button";
 import { formatDate, getTimeSince } from "../../utils/utils";
 import { useHotkeys } from "react-hotkeys-hook";
 import { TaskDetailSkeleton } from "./TaskDetailSkeleton";
+import { useAddLabel, useLabels } from "../../hooks/useLabels";
+import {
+  useAddTaskLabel,
+  useDeleteTaskLabel,
+  useTaskLabelsByTaskId,
+} from "../../hooks/useTaskLabels";
 
 interface TaskDetailProps {
   taskId: number;
   onEdit?: (task: Task) => void;
   onDelete?: (task: Task) => void;
   onBack?: () => void;
+  onToggleCompletion?: (taskId: number) => void;
   labels?: Label[];
   categories?: Category[];
 }
@@ -39,10 +48,13 @@ export function TaskDetail({
   onEdit,
   onDelete,
   onBack,
+  onToggleCompletion,
   labels,
   categories,
 }: TaskDetailProps) {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const [isLabelSelectorOpen, setIsLabelSelectorOpen] = useState(false);
 
   // Fetch task details
   const {
@@ -60,6 +72,12 @@ export function TaskDetail({
   const [previousTaskExists, setPreviousTaskExists] = useState(taskId > 1);
   const [nextTaskExists, setNextTaskExists] = useState(true);
 
+  const addLabelMutation = useAddLabel();
+  const removeLabelMutation = useDeleteTaskLabel();
+  const addTaskLabelMutation = useAddTaskLabel();
+
+  const { data: taskLabels } = useTaskLabelsByTaskId(taskId);
+
   // Check if adjacent tasks exist
   useEffect(() => {
     // Previous task check is simple - just verify ID is > 1
@@ -68,7 +86,7 @@ export function TaskDetail({
     // For next task, we can make a lightweight HEAD request to check existence
     const checkNextTask = async () => {
       try {
-        await apiClient.head(`/api/Task/${taskId + 1}`);
+        // await apiClient.head(`/api/Task/${taskId + 1}`);
         setNextTaskExists(true);
       } catch (error) {
         setNextTaskExists(false);
@@ -139,6 +157,41 @@ export function TaskDetail({
     }
   };
 
+  const handleToggleCompletion = (id: number) => {
+    if (onToggleCompletion) {
+      onToggleCompletion(id);
+      // Invalidate the query to force refetch
+      queryClient.invalidateQueries({ queryKey: ["task", id] });
+    }
+  };
+
+  // Handle adding a label to the task
+  const handleAddTaskLabel = (labelId: number) => {
+    addTaskLabelMutation
+      .mutateAsync({
+        taskId: taskId,
+        labelId: labelId,
+      })
+      .then(() => {
+        // Refresh the task data
+        queryClient.invalidateQueries({ queryKey: ["task", taskId] });
+        setIsLabelSelectorOpen(false);
+      });
+  };
+
+  // Handle removing a label from the task
+  const handleRemoveLabel = (labelId: number) => {
+    removeLabelMutation
+      .mutateAsync({
+        taskId: taskId,
+        labelId: labelId,
+      })
+      .then(() => {
+        // Refresh the task data
+        queryClient.invalidateQueries({ queryKey: ["task", taskId] });
+      });
+  };
+
   if (isLoading) {
     return <TaskDetailSkeleton />;
   }
@@ -171,17 +224,12 @@ export function TaskDetail({
           <div className="flex items-center gap-2 text-nowrap">
             {/* Toggle completion button */}
             <Button
-              onClick={() =>
-                onEdit && onEdit({ ...task, isCompleted: !task.isCompleted })
-              }
+              onClick={() => handleToggleCompletion(task.id!)}
               className={`!py-1.5 !px-3 flex items-center gap-1 ${
                 task.isCompleted
                   ? "bg-green-50 hover:bg-green-100 text-green-700"
                   : "bg-amber-50 hover:bg-amber-100 text-amber-700"
               }`}
-              title={
-                task.isCompleted ? "Mark as incomplete" : "Mark as complete"
-              }
             >
               {task.isCompleted ? (
                 <>
@@ -197,7 +245,7 @@ export function TaskDetail({
             {onEdit && (
               <Button
                 onClick={() => onEdit(task)}
-                className="!py-1.5 !px-3 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 flex items-center gap-1"
+                className="!py-1.5 !px-3 bg-indigo-400 hover:bg-indigo-500 text-indigo-700 flex items-center gap-1"
               >
                 <FaEdit size={14} /> Edit
               </Button>
@@ -205,7 +253,7 @@ export function TaskDetail({
             {onDelete && (
               <Button
                 onClick={() => onDelete(task)}
-                className="!py-1.5 !px-3 bg-red-50 hover:bg-red-100 text-red-700 flex items-center gap-1"
+                className="!py-1.5 !px-3 bg-red-400 hover:bg-red-500 text-red-700 flex items-center gap-1"
               >
                 <FaTrash size={14} /> Delete
               </Button>
@@ -316,39 +364,49 @@ export function TaskDetail({
             </span>
           </div>
 
-          {/* Labels card with improved design */}
           <div className="bg-gray-50 rounded-lg p-4 border border-gray-100">
             <h3 className="text-sm font-medium text-gray-700 mb-2 flex items-center">
               <FaTags className="mr-1.5 text-gray-500" /> Labels
             </h3>
 
             <div className="flex flex-wrap gap-2">
-              {task.taskLabels && task.taskLabels.length > 0 ? (
-                task.taskLabels.map((tl) => {
-                  const label = labels?.find((l) => l.id === tl.labelId);
-                  if (!label) return null;
+              {taskLabels && taskLabels.length > 0 ? (
+                taskLabels.map((taskLabel) => {
+                  const labelId = taskLabel.labelId;
+                  const labelInfo = labels?.find((l) => l.id === labelId) || {
+                    name: "Unknown Label",
+                  };
 
                   return (
                     <span
-                      key={label.id}
-                      className={`px-3 py-1.5 text-sm rounded-full flex items-center ${getLabelColorClass(
-                        label.id!
+                      key={labelId}
+                      className={`px-3 py-1.5 text-sm rounded-full flex items-center justify-between gap-2 ${getLabelColorClass(
+                        labelId!
                       )}`}
                     >
-                      <span
-                        className={`h-2 w-2 rounded-full mr-1.5 ${
-                          label.id === 1
-                            ? "bg-red-500"
-                            : label.id === 2
-                            ? "bg-blue-500"
-                            : label.id === 3
-                            ? "bg-green-500"
-                            : label.id === 4
-                            ? "bg-yellow-500"
-                            : "bg-gray-500"
-                        }`}
-                      ></span>
-                      {label.name}
+                      <div className="flex items-center">
+                        <span
+                          className={`h-2 w-2 rounded-full mr-1.5 ${
+                            labelId === 1
+                              ? "bg-red-500"
+                              : labelId === 2
+                              ? "bg-blue-500"
+                              : labelId === 3
+                              ? "bg-green-500"
+                              : labelId === 4
+                              ? "bg-yellow-500"
+                              : "bg-gray-500"
+                          }`}
+                        ></span>
+                        {labelInfo.name}
+                      </div>
+                      <button
+                        onClick={() => handleRemoveLabel(labelId!)}
+                        className="text-opacity-60 hover:text-opacity-100"
+                        title="Remove label"
+                      >
+                        <FaTimes size={10} />
+                      </button>
                     </span>
                   );
                 })
@@ -372,11 +430,72 @@ export function TaskDetail({
               )}
             </div>
 
-            <button className="w-full mt-3 text-center px-3 py-1.5 text-sm border border-dashed border-gray-300 rounded-md text-gray-500 hover:text-indigo-600 hover:border-indigo-500 transition-colors">
-              + Add Label
-            </button>
-          </div>
+            {/* Label selector dropdown - ADD THIS PART */}
+            {isLabelSelectorOpen ? (
+              <div className="mt-3 border border-gray-200 rounded-md p-2 bg-white shadow-sm">
+                <div className="flex justify-between items-center mb-2">
+                  <h4 className="text-xs font-medium text-gray-700">
+                    Add a label
+                  </h4>
+                  <button
+                    onClick={() => setIsLabelSelectorOpen(false)}
+                    className="text-gray-400 hover:text-gray-600"
+                  >
+                    <FaTimes size={12} />
+                  </button>
+                </div>
 
+                <div className="max-h-32 overflow-y-auto">
+                  {labels
+                    ?.filter(
+                      (label) =>
+                        // Only show labels not already on the task
+                        !taskLabels?.some((tl) => tl.labelId === label.id)
+                    )
+                    .map((label) => (
+                      <button
+                        key={label.id}
+                        onClick={() => handleAddTaskLabel(label.id!)}
+                        className={`w-full text-left px-2 py-1.5 text-xs rounded mb-1 flex items-center ${getLabelColorClass(
+                          label.id!
+                        )}`}
+                      >
+                        <span
+                          className={`h-2 w-2 rounded-full mr-1.5 ${
+                            label.id === 1
+                              ? "bg-red-500"
+                              : label.id === 2
+                              ? "bg-blue-500"
+                              : label.id === 3
+                              ? "bg-green-500"
+                              : label.id === 4
+                              ? "bg-yellow-500"
+                              : "bg-gray-500"
+                          }`}
+                        ></span>
+                        {label.name}
+                      </button>
+                    ))}
+
+                  {labels?.filter(
+                    (label) =>
+                      !taskLabels?.some((tl) => tl.labelId === label.id)
+                  ).length === 0 && (
+                    <p className="text-xs text-gray-500 italic p-1">
+                      All labels already added
+                    </p>
+                  )}
+                </div>
+              </div>
+            ) : (
+              <button
+                onClick={() => setIsLabelSelectorOpen(true)}
+                className="w-full mt-3 text-center px-3 py-1.5 text-sm border border-dashed border-gray-300 rounded-md text-gray-500 hover:text-indigo-600 hover:border-indigo-500 transition-colors flex items-center justify-center"
+              >
+                <FaPlus size={10} className="mr-1.5" /> Add Label
+              </button>
+            )}
+          </div>
           {/* Activity timeline card */}
           <div className="bg-gray-50 rounded-lg p-4 border border-gray-100">
             <h3 className="text-sm font-medium text-gray-700 mb-2">Activity</h3>

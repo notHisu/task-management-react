@@ -13,6 +13,7 @@ export interface User {
 }
 
 export interface AuthState {
+  id: number | null;
   user: User | null;
   isLoading: boolean;
   error: string | null;

@@ -15,6 +15,20 @@ export const useTasks = () => {
   });
 };
 
+export const useTaskById = (taskId: number) => {
+  return useQuery({
+    queryKey: ["task", taskId],
+    queryFn: async ({ queryKey }) => {
+      const [_key, taskId] = queryKey as [string, number];
+      const url = `/api/Task/${taskId}`;
+
+      const response = await apiClient.get<Task>(url);
+      return response.data;
+    },
+    enabled: !!taskId,
+  });
+};
+
 export const useTaskToggleCompletion = () => {
   const queryClient = useQueryClient();
 
