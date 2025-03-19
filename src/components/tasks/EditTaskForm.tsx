@@ -443,7 +443,9 @@ export function EditTaskForm({
                   )}`
             }`}
           >
-            <option value="">Select a category</option>
+            <option className="" value="">
+              Select a category
+            </option>
             {categories?.map((category) => (
               <option key={category.id} value={category.id}>
                 {category.name}

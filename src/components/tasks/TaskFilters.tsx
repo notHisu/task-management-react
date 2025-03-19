@@ -260,52 +260,41 @@ export function TaskFilters({
             <div className="flex flex-wrap gap-2 max-h-28 overflow-y-auto pr-1">
               {labels?.map((label) => {
                 const isSelected = selectedLabels.includes(label.id!);
-                let bgColor = "bg-gray-100";
-                let textColor = "text-gray-800";
 
-                if (isSelected) {
-                  if (label.id === 1) {
-                    bgColor = "bg-red-500";
-                    textColor = "text-white";
-                  } else if (label.id === 2) {
-                    bgColor = "bg-blue-500";
-                    textColor = "text-white";
-                  } else if (label.id === 3) {
-                    bgColor = "bg-green-500";
-                    textColor = "text-white";
-                  } else if (label.id === 4) {
-                    bgColor = "bg-yellow-500";
-                    textColor = "text-white";
-                  } else {
-                    bgColor = "bg-indigo-500";
-                    textColor = "text-white";
-                  }
-                } else {
-                  if (label.id === 1) {
-                    bgColor = "bg-red-100";
-                    textColor = "text-red-800";
-                  } else if (label.id === 2) {
-                    bgColor = "bg-blue-100";
-                    textColor = "text-blue-800";
-                  } else if (label.id === 3) {
-                    bgColor = "bg-green-100";
-                    textColor = "text-green-800";
-                  } else if (label.id === 4) {
-                    bgColor = "bg-yellow-100";
-                    textColor = "text-yellow-800";
-                  }
-                }
+                // Get color from database or use fallback
+                const colorHex = label.color?.startsWith("#")
+                  ? label.color
+                  : `#${label.color || "808080"}`; // Default to gray if no color
+
+                // Calculate appropriate opacity for background
+                const bgColor = isSelected ? colorHex : `${colorHex}20`; // 20% opacity for unselected
+
+                // Calculate text color based on background brightness
+                const r = parseInt(colorHex.slice(1, 3) || "80", 16);
+                const g = parseInt(colorHex.slice(3, 5) || "80", 16);
+                const b = parseInt(colorHex.slice(5, 7) || "80", 16);
+                const brightness = (r * 299 + g * 587 + b * 114) / 1000;
+                const textColor = isSelected
+                  ? brightness > 128
+                    ? "#1F2937"
+                    : "#FFFFFF" // Darker text on light bg, white on dark
+                  : colorHex; // Use the label color for text when unselected
 
                 return (
                   <button
                     key={label.id}
                     onClick={() => onLabelToggle(label.id!)}
-                    className={`px-3 py-1.5 text-xs rounded-full flex items-center gap-1 transition-colors ${bgColor} ${textColor}`}
+                    className="px-3 py-1.5 text-xs rounded-full flex items-center gap-1 transition-colors"
+                    style={{
+                      backgroundColor: isSelected ? bgColor : `${colorHex}15`, // Use even lighter bg when not selected
+                      color: isSelected ? textColor : textColor,
+                    }}
                   >
                     <span
-                      className={`h-2 w-2 rounded-full ${
-                        isSelected ? "bg-white" : bgColor
-                      }`}
+                      className="h-2 w-2 rounded-full"
+                      style={{
+                        backgroundColor: isSelected ? "#FFFFFF" : colorHex,
+                      }}
                     ></span>
                     {label.name}
                     {isSelected && <FaTimes className="ml-1" />}

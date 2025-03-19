@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Task } from "../../types/Task";
 import { Label } from "../../types/Label";
@@ -78,6 +78,11 @@ export function TaskDetail({
   const [previousTaskExists, setPreviousTaskExists] = useState(taskId > 1);
   const [nextTaskExists, setNextTaskExists] = useState(true);
 
+  const [isAddingNewLabel, setIsAddingNewLabel] = useState(false);
+  const [newLabelName, setNewLabelName] = useState("");
+  const [newLabelColor, setNewLabelColor] = useState("#000000");
+  const newLabelInputRef = useRef<HTMLInputElement>(null);
+
   const addLabelMutation = useAddLabel();
   const removeLabelMutation = useDeleteTaskLabel();
   const addTaskLabelMutation = useAddTaskLabel();
@@ -103,6 +108,12 @@ export function TaskDetail({
       checkNextTask();
     }
   }, [taskId, task]);
+
+  useEffect(() => {
+    if (isAddingNewLabel && newLabelInputRef.current) {
+      newLabelInputRef.current.focus();
+    }
+  }, [isAddingNewLabel]);
 
   // Add keyboard shortcuts
   useHotkeys(
@@ -142,16 +153,27 @@ export function TaskDetail({
     return category?.name || "Uncategorized";
   };
 
-  // Map labels to color classes based on label id
+  // Map labels to color classes based on label's actual color
   const getLabelColorClass = (labelId: number) => {
-    const colorClasses: Record<number, string> = {
-      1: "bg-red-100 text-red-800", // Urgent
-      2: "bg-blue-100 text-blue-800", // Important
-      3: "bg-green-100 text-green-800", // Home
-      4: "bg-yellow-100 text-yellow-800", // Office
-    };
+    if (!labels) return "bg-gray-100 text-gray-800";
 
-    return colorClasses[labelId] || "bg-gray-100 text-gray-800";
+    const label = labels.find((l) => l.id === labelId);
+    if (!label || !label.color) return "bg-gray-100 text-gray-800";
+
+    // Generate color code (adding # if needed)
+    const colorHex = label.color.startsWith("#")
+      ? label.color
+      : `#${label.color}`;
+
+    // Calculate text color (black or white) based on background color brightness
+    const r = parseInt(colorHex.slice(1, 3), 16);
+    const g = parseInt(colorHex.slice(3, 5), 16);
+    const b = parseInt(colorHex.slice(5, 7), 16);
+    const brightness = (r * 299 + g * 587 + b * 114) / 1000;
+    const textColor = brightness > 128 ? "text-gray-800" : "text-white";
+
+    // Return an empty string for className, we'll use inline style instead
+    return "";
   };
 
   // Handle back button click
@@ -182,6 +204,27 @@ export function TaskDetail({
         // Refresh the task data
         queryClient.invalidateQueries({ queryKey: ["task", taskId] });
         setIsLabelSelectorOpen(false);
+      });
+  };
+
+  const handleCreateNewLabel = () => {
+    if (!newLabelName.trim()) return;
+
+    addLabelMutation
+      .mutateAsync({
+        name: newLabelName.trim(),
+        color: newLabelColor.replace("#", ""), // Remove # prefix if API requires
+      })
+      .then((newLabel) => {
+        // After creating the label, add it to the task
+        handleAddTaskLabel(newLabel.id!);
+
+        // Reset the form
+        setNewLabelName("");
+        setIsAddingNewLabel(false);
+
+        // Refresh labels list
+        queryClient.invalidateQueries({ queryKey: ["labels"] });
       });
   };
 
@@ -328,28 +371,37 @@ export function TaskDetail({
                   const labelId = taskLabel.labelId;
                   const labelInfo = labels?.find((l) => l.id === labelId) || {
                     name: "Unknown Label",
+                    color: "808080", // Default gray if label not found
                   };
+
+                  // Generate color code (adding # if needed)
+                  const colorHex = labelInfo.color?.startsWith("#")
+                    ? labelInfo.color
+                    : `#${labelInfo.color || "808080"}`;
+
+                  // Calculate light background (20% opacity)
+                  const bgColor = `${colorHex}33`;
+
+                  // Calculate text color based on background brightness
+                  const r = parseInt(colorHex.slice(1, 3) || "80", 16);
+                  const g = parseInt(colorHex.slice(3, 5) || "80", 16);
+                  const b = parseInt(colorHex.slice(5, 7) || "80", 16);
+                  const brightness = (r * 299 + g * 587 + b * 114) / 1000;
+                  const textColor = brightness > 128 ? "#1F2937" : "#FFFFFF";
 
                   return (
                     <span
                       key={labelId}
-                      className={`px-3 py-1.5 text-sm rounded-full flex items-center justify-between gap-2 ${getLabelColorClass(
-                        labelId!
-                      )}`}
+                      className="px-3 py-1.5 text-sm rounded-full flex items-center justify-between gap-2"
+                      style={{
+                        backgroundColor: bgColor,
+                        color: textColor,
+                      }}
                     >
                       <div className="flex items-center">
                         <span
-                          className={`h-2 w-2 rounded-full mr-1.5 ${
-                            labelId === 1
-                              ? "bg-red-500"
-                              : labelId === 2
-                              ? "bg-blue-500"
-                              : labelId === 3
-                              ? "bg-green-500"
-                              : labelId === 4
-                              ? "bg-yellow-500"
-                              : "bg-gray-500"
-                          }`}
+                          className="h-2 w-2 rounded-full mr-1.5"
+                          style={{ backgroundColor: colorHex }}
                         ></span>
                         {labelInfo.name}
                       </div>
@@ -386,47 +438,110 @@ export function TaskDetail({
                   </button>
                 </div>
 
-                <div className="max-h-32 overflow-y-auto">
-                  {labels
-                    ?.filter(
-                      (label) =>
-                        // Only show labels not already on the task
-                        !taskLabels?.some((tl) => tl.labelId === label.id)
-                    )
-                    .map((label) => (
-                      <button
-                        key={label.id}
-                        onClick={() => handleAddTaskLabel(label.id!)}
-                        className={`w-full text-left px-2 py-1.5 text-xs rounded mb-1 flex items-center ${getLabelColorClass(
-                          label.id!
-                        )}`}
+                {isAddingNewLabel ? (
+                  <div className="space-y-2">
+                    <div>
+                      <input
+                        ref={newLabelInputRef}
+                        type="text"
+                        value={newLabelName}
+                        onChange={(e) => setNewLabelName(e.target.value)}
+                        placeholder="Label name"
+                        className="w-full px-2 py-1.5 text-xs border border-gray-300 rounded mb-1.5"
+                        maxLength={20}
+                      />
+                    </div>
+                    <div className="flex items-center space-x-1">
+                      <label className="text-xs text-gray-600">Color:</label>
+                      <input
+                        type="color"
+                        value={newLabelColor}
+                        onChange={(e) => setNewLabelColor(e.target.value)}
+                        className="w-8 h-8 rounded cursor-pointer"
+                      />
+                      <div
+                        className="ml-1 flex-1 px-2 py-1 rounded text-xs"
+                        style={{
+                          backgroundColor: `${newLabelColor}20`,
+                          color: newLabelColor,
+                        }}
                       >
-                        <span
-                          className={`h-2 w-2 rounded-full mr-1.5 ${
-                            label.id === 1
-                              ? "bg-red-500"
-                              : label.id === 2
-                              ? "bg-blue-500"
-                              : label.id === 3
-                              ? "bg-green-500"
-                              : label.id === 4
-                              ? "bg-yellow-500"
-                              : "bg-gray-500"
-                          }`}
-                        ></span>
-                        {label.name}
+                        Preview
+                      </div>
+                    </div>
+                    <div className="flex space-x-2 mt-2">
+                      <button
+                        onClick={() => setIsAddingNewLabel(false)}
+                        className="flex-1 px-2 py-1.5 text-xs rounded bg-gray-100 text-gray-600 hover:bg-gray-200"
+                      >
+                        Cancel
                       </button>
-                    ))}
+                      <button
+                        onClick={handleCreateNewLabel}
+                        disabled={!newLabelName.trim()}
+                        className={`flex-1 px-2 py-1.5 text-xs rounded ${
+                          newLabelName.trim()
+                            ? "bg-indigo-100 text-indigo-700 hover:bg-indigo-200"
+                            : "bg-gray-100 text-gray-400 cursor-not-allowed"
+                        }`}
+                      >
+                        Create & Add
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    <div className="max-h-32 overflow-y-auto">
+                      {labels
+                        ?.filter(
+                          (label) =>
+                            // Only show labels not already on the task
+                            !taskLabels?.some((tl) => tl.labelId === label.id)
+                        )
+                        .map((label) => (
+                          <button
+                            key={label.id}
+                            onClick={() => handleAddTaskLabel(label.id!)}
+                            className={`w-full text-left px-2 py-1.5 text-xs rounded mb-1 flex items-center ${getLabelColorClass(
+                              label.id!
+                            )}`}
+                          >
+                            <span
+                              className={`h-2 w-2 rounded-full mr-1.5 ${
+                                label.id === 1
+                                  ? "bg-red-500"
+                                  : label.id === 2
+                                  ? "bg-blue-500"
+                                  : label.id === 3
+                                  ? "bg-green-500"
+                                  : label.id === 4
+                                  ? "bg-yellow-500"
+                                  : "bg-gray-500"
+                              }`}
+                            ></span>
+                            {label.name}
+                          </button>
+                        ))}
 
-                  {labels?.filter(
-                    (label) =>
-                      !taskLabels?.some((tl) => tl.labelId === label.id)
-                  ).length === 0 && (
-                    <p className="text-xs text-gray-500 italic p-1">
-                      All labels already added
-                    </p>
-                  )}
-                </div>
+                      {labels?.filter(
+                        (label) =>
+                          !taskLabels?.some((tl) => tl.labelId === label.id)
+                      ).length === 0 && (
+                        <p className="text-xs text-gray-500 italic p-1">
+                          All existing labels added
+                        </p>
+                      )}
+                    </div>
+
+                    {/* Add this custom label button */}
+                    <button
+                      onClick={() => setIsAddingNewLabel(true)}
+                      className="w-full mt-2 text-center px-3 py-1.5 text-xs border border-dashed border-gray-300 rounded-md text-indigo-600 hover:bg-indigo-50 transition-colors flex items-center justify-center"
+                    >
+                      <FaPlus size={10} className="mr-1.5" /> Create new label
+                    </button>
+                  </>
+                )}
               </div>
             ) : (
               <button
