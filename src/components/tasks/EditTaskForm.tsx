@@ -16,12 +16,15 @@ import {
   FaCheck,
   FaHistory,
   FaInfoCircle,
+  FaEdit,
+  FaEye,
 } from "react-icons/fa";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { Task } from "../../types/Task";
 import { AnimatePresence, motion } from "framer-motion";
 import { formatDistanceToNow } from "date-fns";
+import { MarkdownRenderer } from "../common/MarkdownRenderer";
 
 interface EditTaskFormProps {
   onSubmit: (data: TaskFormData) => void;
@@ -50,6 +53,7 @@ export function EditTaskForm({
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [fieldChanges, setFieldChanges] = useState<Record<string, boolean>>({});
   const formRef = useRef<HTMLFormElement>(null);
+  const [isPreviewMode, setIsPreviewMode] = useState(false);
 
   // Get formatted creation date
   const createdDate = initialData?.createdAt
@@ -313,32 +317,64 @@ export function EditTaskForm({
             </span>
           )}
         </label>
-        <div className="relative">
-          <textarea
-            id="description"
-            {...register("description")}
-            className={`w-full px-3 py-2 border rounded-lg text-sm shadow-sm transition-all duration-200 ease-in-out min-h-[100px] resize-y ${
-              errors.description
-                ? "border-red-500 focus:ring-red-500"
-                : `focus:ring-indigo-500 focus:border-indigo-500 ${getFieldClass(
-                    "description"
-                  )}`
-            }`}
-            placeholder="Describe your task here..."
-            maxLength={1000}
-          />
-          <div className="absolute bottom-2 right-3 flex items-center pointer-events-none">
-            <span
-              className={`text-xs ${
-                (formValues.description?.length || 0) > 900
-                  ? "text-amber-500"
-                  : "text-gray-400"
-              }`}
-            >
-              {formValues.description?.length || 0}/1000
-            </span>
+
+        <button
+          type="button"
+          onClick={() => {
+            setIsPreviewMode(!isPreviewMode);
+          }}
+          className="text-xs flex items-center gap-1 text-indigo-600 hover:text-indigo-800 transition-colors"
+        >
+          {isPreviewMode ? (
+            <>
+              <FaEdit size={12} /> Edit
+            </>
+          ) : (
+            <>
+              <FaEye size={12} /> Preview
+            </>
+          )}
+        </button>
+        {isPreviewMode /* Preview mode */ ? (
+          <div className="border rounded-lg px-3 py-2 min-h-[100px] bg-gray-50">
+            {formValues.description ? (
+              <MarkdownRenderer
+                content={formValues.description}
+                className="prose-sm text-gray-800 max-w-none"
+              />
+            ) : (
+              <p className="text-gray-400 italic text-sm">Nothing to preview</p>
+            )}
           </div>
-        </div>
+        ) : (
+          <div className="relative">
+            <textarea
+              id="description"
+              {...register("description")}
+              className={`w-full px-3 py-2 border rounded-lg text-sm shadow-sm transition-all duration-200 ease-in-out min-h-[100px] resize-y ${
+                errors.description
+                  ? "border-red-500 focus:ring-red-500"
+                  : `focus:ring-indigo-500 focus:border-indigo-500 ${getFieldClass(
+                      "description"
+                    )}`
+              }`}
+              placeholder="Describe your task here..."
+              maxLength={1000}
+            />
+            <div className="absolute bottom-2 right-3 flex items-center pointer-events-none">
+              <span
+                className={`text-xs ${
+                  (formValues.description?.length || 0) > 900
+                    ? "text-amber-500"
+                    : "text-gray-400"
+                }`}
+              >
+                {formValues.description?.length || 0}/1000
+              </span>
+            </div>
+          </div>
+        )}
+
         {errors.description && (
           <p className="text-xs text-red-500 mt-1">
             {errors.description.message}

@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import apiClient from "../services/api/axiosConfig";
-import { Task, TaskWithLabelsFormData } from "../types/Task";
+import { Task, TaskLabel, TaskWithLabelsFormData } from "../types/Task";
 import { toast } from "react-toastify";
 
 export const useTasks = () => {
@@ -84,7 +84,7 @@ export const useTaskEdit = () => {
         const currentLabels = await apiClient.get(`/api/TaskLabel/${taskId}`);
         if (currentLabels.data && currentLabels.data.length > 0) {
           await Promise.all(
-            currentLabels.data.map(async (label: any) =>
+            currentLabels.data.map(async (label: TaskLabel) =>
               // Use the correct API endpoint format for deleting task labels
               apiClient.delete(`/api/TaskLabel/${taskId}/${label.labelId}`)
             )

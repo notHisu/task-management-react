@@ -4,11 +4,17 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { taskSchema, TaskFormData } from "../../schemas/taskSchema";
 import { useCategories } from "../../hooks/useCategories";
 import { useLabels } from "../../hooks/useLabels";
-import FormField from "../common/FormElements/FormField";
 import Button from "../common/Button";
-import { FaCalendarAlt, FaExclamationTriangle, FaFlag } from "react-icons/fa";
+import {
+  FaCalendarAlt,
+  FaEdit,
+  FaExclamationTriangle,
+  FaEye,
+  FaFlag,
+} from "react-icons/fa";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
+import { MarkdownRenderer } from "../common/MarkdownRenderer";
 
 interface TaskFormProps {
   onSubmit: (data: TaskFormData) => void;
@@ -29,6 +35,8 @@ export function TaskForm({
   const [selectedPriority, setSelectedPriority] = useState<string>(
     initialData?.priority || "NORMAL"
   );
+
+  const [isPreviewMode, setIsPreviewMode] = useState(false);
 
   const {
     register,
@@ -109,35 +117,71 @@ export function TaskForm({
         >
           Description
         </label>
-        <div className="relative">
-          <textarea
-            id="description"
-            {...register("description")}
-            className={`w-full px-3 py-2 border rounded-lg text-sm shadow-sm transition-all duration-200 ease-in-out min-h-[100px] resize-y ${
-              errors.description
-                ? "border-red-500 focus:ring-red-500"
-                : "border-gray-300 focus:ring-indigo-500 focus:border-indigo-500"
-            }`}
-            placeholder="Describe your task here..."
-            maxLength={1000}
-          />
-          <div className="absolute bottom-2 right-3 flex items-center pointer-events-none">
-            <span
-              className={`text-xs ${
-                (formValues.description?.length || 0) > 900
-                  ? "text-amber-500"
-                  : "text-gray-400"
-              }`}
-            >
-              {formValues.description?.length || 0}/1000
-            </span>
+
+        <button
+          type="button"
+          onClick={() => {
+            setIsPreviewMode(!isPreviewMode);
+          }}
+          className="text-xs flex items-center gap-1 text-indigo-600 hover:text-indigo-800 transition-colors"
+        >
+          {isPreviewMode ? (
+            <>
+              <FaEdit size={12} /> Edit
+            </>
+          ) : (
+            <>
+              <FaEye size={12} /> Preview
+            </>
+          )}
+        </button>
+        {isPreviewMode ? (
+          /* Preview mode */
+          <div className="border rounded-lg px-3 py-2 min-h-[100px] bg-gray-50">
+            {formValues.description ? (
+              <MarkdownRenderer
+                content={formValues.description}
+                className="prose-sm text-gray-800 max-w-none"
+              />
+            ) : (
+              <p className="text-gray-400 italic text-sm">Nothing to preview</p>
+            )}
           </div>
-        </div>
+        ) : (
+          /* Edit mode */
+          <div className="relative">
+            <textarea
+              id="description"
+              {...register("description")}
+              className={`w-full px-3 py-2 border rounded-lg text-sm shadow-sm transition-all duration-200 ease-in-out min-h-[100px] resize-y ${
+                errors.description
+                  ? "border-red-500 focus:ring-red-500"
+                  : "border-gray-300 focus:ring-indigo-500 focus:border-indigo-500"
+              }`}
+              placeholder="Describe your task here..."
+              maxLength={1000}
+            />
+            <div className="absolute bottom-2 right-3 flex items-center pointer-events-none">
+              <span
+                className={`text-xs ${
+                  (formValues.description?.length || 0) > 900
+                    ? "text-amber-500"
+                    : "text-gray-400"
+                }`}
+              >
+                {formValues.description?.length || 0}/1000
+              </span>
+            </div>
+          </div>
+        )}
         {errors.description && (
           <p className="text-xs text-red-500 mt-1">
             {errors.description.message}
           </p>
         )}
+        <div className="text-xs text-gray-500 mt-1">
+          You can use markdown syntax for formatting.
+        </div>
       </div>
 
       {/* Due date picker */}

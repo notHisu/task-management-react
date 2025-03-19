@@ -61,6 +61,8 @@ export const useAddTaskLabel = () => {
 };
 
 export const useDeleteTaskLabel = () => {
+  const queryClient = useQueryClient();
+
   return useMutation({
     mutationFn: async ({
       taskId,
@@ -72,6 +74,13 @@ export const useDeleteTaskLabel = () => {
       const url = `/api/TaskLabel/${taskId}/${labelId}`;
 
       await apiClient.delete(url);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["taskLabels"] });
+      toast.success("Label removed from task successfully");
+    },
+    onError: () => {
+      toast.error("Failed to remove label from task");
     },
   });
 };

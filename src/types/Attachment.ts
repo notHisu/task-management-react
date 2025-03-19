@@ -1,7 +1,9 @@
-export interface Attachment {
+export interface TaskAttachment {
   id?: number;
-  taskId?: number;
-  fileName?: string;
-  fileUrl?: string;
-  updatedAt?: string;
+  taskId: number;
+  fileName: string;
+  fileSize: number;
+  fileType: string;
+  fileUrl: string;
+  uploadedAt?: string;
 }

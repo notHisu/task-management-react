@@ -22,7 +22,6 @@ export function Modal({
   onClose,
   children,
   title,
-  size = "medium",
   preventClose = false,
   closeOnEscape = true,
   closeOnOutsideClick = true,
@@ -141,7 +140,7 @@ export function Modal({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
-            className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm"
+            className="fixed inset-0 bg-opacity-50 backdrop-blur-sm"
             aria-hidden="true"
           />
 

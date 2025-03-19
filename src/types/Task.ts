@@ -24,6 +24,8 @@ export interface TaskUpdate {
   description?: string;
   isCompleted?: boolean;
   categoryId: number;
+  priority?: string;
+  dueDate?: string;
 }
 
 export interface TaskWithLabelsFormData extends TaskFormData {

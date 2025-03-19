@@ -20,6 +20,10 @@ import {
   FaCheck,
   FaTimes,
   FaPlus,
+  FaListAlt,
+  FaPaperclip,
+  FaInfoCircle,
+  FaChevronLeft,
 } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 import Button from "../common/Button";
@@ -32,6 +36,8 @@ import {
   useDeleteTaskLabel,
   useTaskLabelsByTaskId,
 } from "../../hooks/useTaskLabels";
+import { MarkdownRenderer } from "../common/MarkdownRenderer";
+import { TaskAttachments } from "./TaskAttachments";
 
 interface TaskDetailProps {
   taskId: number;
@@ -227,8 +233,8 @@ export function TaskDetail({
               onClick={() => handleToggleCompletion(task.id!)}
               className={`!py-1.5 !px-3 flex items-center gap-1 ${
                 task.isCompleted
-                  ? "bg-green-50 hover:bg-green-100 text-green-700"
-                  : "bg-amber-50 hover:bg-amber-100 text-amber-700"
+                  ? "bg-green-300 hover:bg-green-400 text-green-700"
+                  : "bg-amber-300 hover:bg-amber-400 text-amber-700"
               }`}
             >
               {task.isCompleted ? (
@@ -278,25 +284,14 @@ export function TaskDetail({
           {/* Description Card */}
           <div className="bg-gray-50 rounded-lg p-4 border border-gray-100">
             <h3 className="text-sm font-medium text-gray-700 mb-2 flex items-center">
-              <svg
-                className="w-4 h-4 mr-1.5 text-gray-500"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="2"
-                  d="M4 6h16M4 12h16M4 18h7"
-                ></path>
-              </svg>
+              <FaListAlt className="w-4 h-4 mr-1.5 text-gray-500" />
               Description
             </h3>
             {task.description ? (
-              <p className="text-gray-800 whitespace-pre-wrap">
-                {task.description}
-              </p>
+              <MarkdownRenderer
+                content={task.description}
+                className="text-gray-800"
+              />
             ) : (
               <p className="text-gray-500 italic">No description provided.</p>
             )}
@@ -304,49 +299,7 @@ export function TaskDetail({
 
           {/* Attachments placeholder with improved design */}
           <div className="bg-gray-50 rounded-lg p-4 border border-gray-100">
-            <h3 className="text-sm font-medium text-gray-700 mb-3 flex items-center">
-              <svg
-                className="w-4 h-4 mr-1.5 text-gray-500"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="2"
-                  d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"
-                ></path>
-              </svg>
-              Attachments
-            </h3>
-
-            <div className="flex items-center justify-center h-24 border-2 border-dashed border-gray-300 rounded-md">
-              <div className="text-center">
-                <svg
-                  className="mx-auto h-8 w-8 text-gray-400"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="1.5"
-                    d="M9 13h6m-3-3v6m5 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                  ></path>
-                </svg>
-                <p className="mt-1 text-sm text-gray-500">
-                  Drag files here or{" "}
-                  <span className="text-indigo-600 hover:text-indigo-800 cursor-pointer">
-                    browse
-                  </span>
-                </p>
-                <p className="mt-1 text-xs text-gray-400">
-                  Attachment functionality coming soon
-                </p>
-              </div>
-            </div>
+            <TaskAttachments taskId={taskId} />
           </div>
 
           {/* Comments section - make TaskComments component call go here */}
@@ -412,19 +365,7 @@ export function TaskDetail({
                 })
               ) : (
                 <div className="flex items-center text-gray-500 text-sm px-3 py-2 rounded-md w-full">
-                  <svg
-                    className="w-4 h-4 mr-2 text-gray-400"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth="2"
-                      d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                    ></path>
-                  </svg>
+                  <FaInfoCircle className="w-4 h-4 mr-2 text-gray-400" />
                   No labels attached
                 </div>
               )}
@@ -546,19 +487,7 @@ export function TaskDetail({
               : "No previous task"
           }
         >
-          <svg
-            className="h-4 w-4 mr-1"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth="2"
-              d="M15 19l-7-7 7-7"
-            ></path>
-          </svg>
+          <FaChevronLeft className="h-4 w-4 mr-1" />
           Previous Task
         </button>
 
@@ -614,7 +543,7 @@ export function TaskDetail({
             className="h-4 w-4 ml-1"
             fill="none"
             stroke="currentColor"
-            viewBox="0 24 24"
+            viewBox="0 0 24 24"
           >
             <path
               strokeLinecap="round"
