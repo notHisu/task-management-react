@@ -1,5 +1,4 @@
 import { useMutation } from "@tanstack/react-query";
-import { AxiosError } from "axios";
 import { UserCreateSchema, UserLoginSchema } from "../schemas/userSchema";
 import { setCookie } from "../utils/cookieUtils";
 import apiClient from "../services/api/axiosConfig";
@@ -20,37 +19,32 @@ export function useAuth() {
   // Login mutation
   const loginMutation = useMutation({
     mutationFn: async (userData: UserLoginSchema): Promise<AuthTokens> => {
-      try {
-        const response = await apiClient.post<AuthTokens>(
-          "/api/auth/login",
-          userData
+      const response = await apiClient.post<AuthTokens>(
+        "/api/auth/login",
+        userData
+      );
+      console.log("Login response:", response.data);
+
+      // Store tokens in cookies if login successful
+      if (response.data.accessToken) {
+        setCookie(
+          "access_token",
+          response.data.accessToken,
+          response.data.expiresIn || 3600
         );
-        console.log("Login response:", response.data);
-
-        // Store tokens in cookies if login successful
-        if (response.data.accessToken) {
-          setCookie(
-            "access_token",
-            response.data.accessToken,
-            response.data.expiresIn || 3600
-          );
-          setCookie(
-            "refresh_token",
-            response.data.refreshToken,
-            30 * 24 * 60 * 60 // 30 days for refresh token
-          );
-          setCookie(
-            "token_type",
-            response.data.tokenType || "Bearer",
-            response.data.expiresIn || 3600
-          );
-        }
-
-        return response.data;
-      } catch (error) {
-        const axiosError = error as AxiosError<{ message?: string }>;
-        throw new Error(axiosError.response?.data?.message || "Login failed");
+        setCookie(
+          "refresh_token",
+          response.data.refreshToken,
+          30 * 24 * 60 * 60 // 30 days for refresh token
+        );
+        setCookie(
+          "token_type",
+          response.data.tokenType || "Bearer",
+          response.data.expiresIn || 3600
+        );
       }
+
+      return response.data;
     },
     onSuccess: () => {
       toast.success("Login successful");
@@ -63,15 +57,8 @@ export function useAuth() {
   // Register mutation
   const registerMutation = useMutation({
     mutationFn: async (userData: UserCreateSchema): Promise<User> => {
-      try {
-        const response = await apiClient.post("/api/auth/register", userData);
-        return response.data;
-      } catch (error) {
-        const axiosError = error as AxiosError<{ message?: string }>;
-        throw new Error(
-          axiosError.response?.data?.message || "Registration failed"
-        );
-      }
+      const response = await apiClient.post("/api/auth/register", userData);
+      return response.data;
     },
     onSuccess: () => {
       toast.success("Registration successful");

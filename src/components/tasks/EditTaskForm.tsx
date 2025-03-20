@@ -4,7 +4,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { taskSchema, TaskFormData } from "../../schemas/taskSchema";
 import { useCategories } from "../../hooks/useCategories";
 import { useLabels } from "../../hooks/useLabels";
-import FormField from "../common/FormElements/FormField";
 import Button from "../common/Button";
 import {
   FaCalendarAlt,
@@ -81,7 +80,6 @@ export function EditTaskForm({
   });
 
   // Track which fields have changed from their original values
-  const formValues = watch();
   const title = watch("title");
   const description = watch("description");
   const categoryId = watch("categoryId");
@@ -290,12 +288,10 @@ export function EditTaskForm({
           <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
             <span
               className={`text-xs ${
-                (formValues.title?.length || 0) > 80
-                  ? "text-amber-500"
-                  : "text-gray-400"
+                (title?.length || 0) > 80 ? "text-amber-500" : "text-gray-400"
               }`}
             >
-              {formValues.title?.length || 0}/100
+              {title?.length || 0}/100
             </span>
           </div>
         </div>
@@ -337,9 +333,9 @@ export function EditTaskForm({
         </button>
         {isPreviewMode /* Preview mode */ ? (
           <div className="border rounded-lg px-3 py-2 min-h-[100px] bg-gray-50">
-            {formValues.description ? (
+            {description ? (
               <MarkdownRenderer
-                content={formValues.description}
+                content={description}
                 className="prose-sm text-gray-800 max-w-none"
               />
             ) : (
@@ -364,12 +360,12 @@ export function EditTaskForm({
             <div className="absolute bottom-2 right-3 flex items-center pointer-events-none">
               <span
                 className={`text-xs ${
-                  (formValues.description?.length || 0) > 900
+                  (description?.length || 0) > 900
                     ? "text-amber-500"
                     : "text-gray-400"
                 }`}
               >
-                {formValues.description?.length || 0}/1000
+                {description?.length || 0}/1000
               </span>
             </div>
           </div>
@@ -400,7 +396,11 @@ export function EditTaskForm({
               "dueDate"
             )}`}
             dateFormat="MMMM d, yyyy"
-            minDate={new Date()}
+            minDate={
+              initialData?.dueDate && new Date(initialData.dueDate) < new Date()
+                ? new Date(initialData.dueDate)
+                : new Date()
+            }
             placeholderText="Select a due date (optional)"
             isClearable
           />

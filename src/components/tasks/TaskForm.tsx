@@ -38,6 +38,10 @@ export function TaskForm({
 
   const [isPreviewMode, setIsPreviewMode] = useState(false);
 
+  if (categories) {
+    categories[-1] = { id: -1, name: "Select a category" };
+  }
+
   const {
     register,
     handleSubmit,
@@ -49,7 +53,7 @@ export function TaskForm({
     defaultValues: initialData || {
       title: "",
       description: "",
-      categoryId: 0,
+      categoryId: 1,
       isCompleted: false,
       labelIds: [],
       priority: "NORMAL",

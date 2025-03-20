@@ -27,7 +27,12 @@ import {
 } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 import Button from "../common/Button";
-import { formatDate, getTimeSince } from "../../utils/utils";
+import {
+  formatDate,
+  getLabelColorClass,
+  getTimeSince,
+  processLabelColor,
+} from "../../utils/utils";
 import { useHotkeys } from "react-hotkeys-hook";
 import { TaskDetailSkeleton } from "./TaskDetailSkeleton";
 import { useAddLabel, useLabels } from "../../hooks/useLabels";
@@ -38,6 +43,7 @@ import {
 } from "../../hooks/useTaskLabels";
 import { MarkdownRenderer } from "../common/MarkdownRenderer";
 import { TaskAttachments } from "./TaskAttachments";
+import { get } from "react-hook-form";
 
 interface TaskDetailProps {
   taskId: number;
@@ -151,29 +157,6 @@ export function TaskDetail({
     if (!categories || !task?.categoryId) return "Uncategorized";
     const category = categories.find((cat) => cat.id === task.categoryId);
     return category?.name || "Uncategorized";
-  };
-
-  // Map labels to color classes based on label's actual color
-  const getLabelColorClass = (labelId: number) => {
-    if (!labels) return "bg-gray-100 text-gray-800";
-
-    const label = labels.find((l) => l.id === labelId);
-    if (!label || !label.color) return "bg-gray-100 text-gray-800";
-
-    // Generate color code (adding # if needed)
-    const colorHex = label.color.startsWith("#")
-      ? label.color
-      : `#${label.color}`;
-
-    // Calculate text color (black or white) based on background color brightness
-    const r = parseInt(colorHex.slice(1, 3), 16);
-    const g = parseInt(colorHex.slice(3, 5), 16);
-    const b = parseInt(colorHex.slice(5, 7), 16);
-    const brightness = (r * 299 + g * 587 + b * 114) / 1000;
-    const textColor = brightness > 128 ? "text-gray-800" : "text-white";
-
-    // Return an empty string for className, we'll use inline style instead
-    return "";
   };
 
   // Handle back button click
@@ -374,20 +357,9 @@ export function TaskDetail({
                     color: "808080", // Default gray if label not found
                   };
 
-                  // Generate color code (adding # if needed)
-                  const colorHex = labelInfo.color?.startsWith("#")
-                    ? labelInfo.color
-                    : `#${labelInfo.color || "808080"}`;
-
-                  // Calculate light background (20% opacity)
-                  const bgColor = `${colorHex}33`;
-
-                  // Calculate text color based on background brightness
-                  const r = parseInt(colorHex.slice(1, 3) || "80", 16);
-                  const g = parseInt(colorHex.slice(3, 5) || "80", 16);
-                  const b = parseInt(colorHex.slice(5, 7) || "80", 16);
-                  const brightness = (r * 299 + g * 587 + b * 114) / 1000;
-                  const textColor = brightness > 128 ? "#1F2937" : "#FFFFFF";
+                  const { colorHex, bgColor, textColor } = processLabelColor(
+                    labelInfo.color
+                  );
 
                   return (
                     <span
@@ -498,30 +470,27 @@ export function TaskDetail({
                             // Only show labels not already on the task
                             !taskLabels?.some((tl) => tl.labelId === label.id)
                         )
-                        .map((label) => (
-                          <button
-                            key={label.id}
-                            onClick={() => handleAddTaskLabel(label.id!)}
-                            className={`w-full text-left px-2 py-1.5 text-xs rounded mb-1 flex items-center ${getLabelColorClass(
-                              label.id!
-                            )}`}
-                          >
-                            <span
-                              className={`h-2 w-2 rounded-full mr-1.5 ${
-                                label.id === 1
-                                  ? "bg-red-500"
-                                  : label.id === 2
-                                  ? "bg-blue-500"
-                                  : label.id === 3
-                                  ? "bg-green-500"
-                                  : label.id === 4
-                                  ? "bg-yellow-500"
-                                  : "bg-gray-500"
-                              }`}
-                            ></span>
-                            {label.name}
-                          </button>
-                        ))}
+                        .map((label) => {
+                          const { colorHex, bgColor, textColor } =
+                            processLabelColor(label.color);
+                          return (
+                            <button
+                              key={label.id}
+                              onClick={() => handleAddTaskLabel(label.id!)}
+                              className={`w-full text-left px-2 py-1.5 text-xs rounded mb-1 flex items-center `}
+                              style={{
+                                backgroundColor: bgColor,
+                                color: textColor,
+                              }}
+                            >
+                              <span
+                                className={`h-2 w-2 rounded-full mr-1.5 `}
+                                style={{ backgroundColor: colorHex }}
+                              ></span>
+                              {label.name}
+                            </button>
+                          );
+                        })}
 
                       {labels?.filter(
                         (label) =>

@@ -1,3 +1,5 @@
+import { Label } from "../types/Label";
+
 // Format date utility function
 export const formatDate = (dateString?: string) => {
   if (!dateString) return "";
@@ -39,3 +41,24 @@ export const bytesToSize = (bytes: number) => {
   const i = Math.floor(Math.log(bytes) / Math.log(1024));
   return Math.round(bytes / Math.pow(1024, i)) + " " + sizes[i];
 };
+
+export function processLabelColor(color?: string, opacity: string = "33") {
+  // Generate color code (adding # if needed)
+  const colorHex = color?.startsWith("#") ? color : `#${color || "808080"}`;
+
+  // Calculate light background with specified opacity
+  const bgColor = `${colorHex}${opacity}`;
+
+  // Calculate text color based on background brightness
+  const r = parseInt(colorHex.slice(1, 3) || "80", 16);
+  const g = parseInt(colorHex.slice(3, 5) || "80", 16);
+  const b = parseInt(colorHex.slice(5, 7) || "80", 16);
+  const brightness = (r * 299 + g * 587 + b * 114) / 1000;
+  const textColor = brightness > 128 ? "#1F2937" : "#FFFFFF";
+
+  return {
+    colorHex, // The normalized hex color with # prefix
+    bgColor, // Background color with opacity
+    textColor, // Contrasting text color
+  };
+}

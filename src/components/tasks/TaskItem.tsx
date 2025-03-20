@@ -11,7 +11,11 @@ import {
   FaTrash,
 } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
-import { formatDate } from "../../utils/utils";
+import {
+  formatDate,
+  getLabelColorClass,
+  processLabelColor,
+} from "../../utils/utils";
 
 interface TaskItemProps {
   task: Task;
@@ -43,18 +47,6 @@ export function TaskItem({
 
     const category = categories.find((cat) => cat.id === task.categoryId);
     return category?.name || "Uncategorized";
-  };
-
-  // Map labels to color classes based on label id
-  const getLabelColorClass = (labelId: number) => {
-    const colorClasses: Record<number, string> = {
-      1: "bg-red-100 text-red-800", // Urgent
-      2: "bg-blue-100 text-blue-800", // Important
-      3: "bg-green-100 text-green-800", // Home
-      4: "bg-yellow-100 text-yellow-800", // Office
-    };
-
-    return colorClasses[labelId] || "bg-gray-100 text-gray-800";
   };
 
   return (
@@ -144,25 +136,19 @@ export function TaskItem({
                   const label = labels?.find((l) => l.id === tl.labelId);
                   if (!label) return null;
 
+                  const { colorHex, bgColor, textColor } = processLabelColor(
+                    label.color
+                  );
+
                   return (
                     <span
                       key={label.id}
-                      className={`px-2 py-0.5 text-xs rounded-full flex items-center ${getLabelColorClass(
-                        label.id!
-                      )}`}
+                      style={{ backgroundColor: bgColor, color: textColor }}
+                      className={`px-2 py-0.5 text-xs rounded-full flex items-center `}
                     >
                       <span
-                        className={`h-1.5 w-1.5 rounded-full mr-1 ${
-                          label.id === 1
-                            ? "bg-red-500"
-                            : label.id === 2
-                            ? "bg-blue-500"
-                            : label.id === 3
-                            ? "bg-green-500"
-                            : label.id === 4
-                            ? "bg-yellow-500"
-                            : "bg-gray-500"
-                        }`}
+                        className={`h-1.5 w-1.5 rounded-full mr-1 `}
+                        style={{ background: colorHex }}
                       ></span>
                       {label.name}
                     </span>
