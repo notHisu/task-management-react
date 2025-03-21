@@ -42,7 +42,7 @@ export function Sidebar({ isOpen, onToggle }: SidebarProps) {
     if (window.innerWidth < 768) {
       onToggle && !isOpen && onToggle();
     }
-  }, [currentPath]);
+  }, [currentPath, onToggle, isOpen]);
 
   const handleLogout = async () => {
     if (!user) return;
@@ -152,36 +152,6 @@ export function Sidebar({ isOpen, onToggle }: SidebarProps) {
           </div>
         )}
 
-        {/* Quick actions bar */}
-        <div
-          className={`px-4 py-2 flex ${
-            collapsed ? "flex-col items-center space-y-4" : "justify-around"
-          } border-b border-gray-100`}
-        >
-          <button
-            onClick={() => navigate("/tasks/new")}
-            className="p-2 text-gray-600 hover:text-indigo-600 hover:bg-indigo-50 rounded-full transition-colors"
-            title="New Task"
-          >
-            <FaPlus size={16} />
-          </button>
-
-          <button
-            className="p-2 text-gray-600 hover:text-indigo-600 hover:bg-indigo-50 rounded-full transition-colors"
-            title="Search"
-            onClick={() => document.getElementById("task-search")?.focus()}
-          >
-            <FaSearch size={16} />
-          </button>
-
-          <button
-            className="p-2 text-gray-600 hover:text-indigo-600 hover:bg-indigo-50 rounded-full transition-colors"
-            title="View Calendar"
-          >
-            <FaCalendarAlt size={16} />
-          </button>
-        </div>
-
         {/* Scrollable navigation area */}
         <div className="flex-1 overflow-y-auto px-2 py-4">
           {/* Main Navigation */}
@@ -219,31 +189,6 @@ export function Sidebar({ isOpen, onToggle }: SidebarProps) {
                 />
                 {!collapsed && <span>Tasks</span>}
               </Link>
-
-              {!collapsed && menuSections.tasks && (
-                <div className="ml-8 space-y-1 mt-1">
-                  <Link
-                    to="/tasks?status=pending"
-                    className={`flex items-center py-2 px-3 text-sm rounded-md ${
-                      currentPath === "/tasks?status=pending"
-                        ? "text-indigo-600 bg-indigo-50"
-                        : "text-gray-500 hover:text-gray-700 hover:bg-gray-50"
-                    }`}
-                  >
-                    Pending
-                  </Link>
-                  <Link
-                    to="/tasks?status=completed"
-                    className={`flex items-center py-2 px-3 text-sm rounded-md ${
-                      currentPath === "/tasks?status=completed"
-                        ? "text-indigo-600 bg-indigo-50"
-                        : "text-gray-500 hover:text-gray-700 hover:bg-gray-50"
-                    }`}
-                  >
-                    Completed
-                  </Link>
-                </div>
-              )}
             </div>
 
             {!collapsed && (

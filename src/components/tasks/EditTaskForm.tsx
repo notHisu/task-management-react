@@ -12,7 +12,6 @@ import {
   FaSave,
   FaTimes,
   FaUndo,
-  FaCheck,
   FaHistory,
   FaInfoCircle,
   FaEdit,
@@ -63,7 +62,7 @@ export function EditTaskForm({
     register,
     handleSubmit,
     control,
-    formState: { errors, isSubmitting, isDirty },
+    formState: { errors, isSubmitting },
     watch,
     reset,
   } = useForm<TaskFormData>({
@@ -73,8 +72,7 @@ export function EditTaskForm({
       description: initialData?.description || "",
       categoryId: initialData?.categoryId || 0,
       isCompleted: initialData?.isCompleted || false,
-      labelIds:
-        initialData?.taskLabels?.map((tl) => tl.labelId as number) || [],
+      labelIds: initialData?.taskLabels?.map((tl) => Number(tl.labelId)) || [],
       priority: initialData?.priority || "NORMAL",
     },
   });
@@ -171,8 +169,7 @@ export function EditTaskForm({
       description: initialData?.description || "",
       categoryId: initialData?.categoryId || 0,
       isCompleted: initialData?.isCompleted || false,
-      labelIds:
-        initialData?.taskLabels?.map((tl) => tl.labelId as number) || [],
+      labelIds: initialData?.taskLabels?.map((tl) => Number(tl.labelId)) || [],
     });
     setSelectedPriority(initialData?.priority || "NORMAL");
     setSelectedDate(
@@ -539,12 +536,13 @@ export function EditTaskForm({
             render={({ field }) => (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 {labels?.map((label) => {
+                  const labelId = Number(label.id);
                   const isSelected = field.value?.includes(Number(label.id));
 
                   // Determine if this label's selection has changed from the initial state
                   const initialLabelIds =
                     initialData?.taskLabels?.map((tl) => tl.labelId) || [];
-                  const wasSelected = initialLabelIds.includes(label.id);
+                  const wasSelected = initialLabelIds.includes(labelId);
                   const hasChanged = isSelected !== wasSelected;
 
                   let bgColor = isSelected ? "bg-indigo-500" : "bg-white";
