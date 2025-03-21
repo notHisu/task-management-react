@@ -7,12 +7,12 @@ import {
   useTaskDelete,
   useTaskToggleCompletion,
 } from "../hooks/useTasks";
-import { TaskDetail } from "../components/tasks/TaskDetail";
+import { TaskDetail } from "../components/tasks/TaskDetails/TaskDetail";
 import { Modal } from "../components/common/Modal";
 import { ConfirmationModal } from "../components/common/ConfirmationModal";
-import { EditTaskForm } from "../components/tasks/EditTaskForm";
 import { Task } from "../types/Task";
 import { TaskFormData } from "../schemas/taskSchema";
+import { EditTaskForm } from "../components/tasks/EditTaskForm";
 
 export function TaskDetailPage() {
   const { taskId } = useParams<{ taskId: string }>();
@@ -29,7 +29,6 @@ export function TaskDetailPage() {
 
   const taskEditMutation = useTaskEdit();
   const taskDeleteMutation = useTaskDelete();
-  const taskToggleCompleeteMutation = useTaskToggleCompletion();
 
   // Handler for editing a task
   const handleEditTask = (data: TaskFormData) => {
@@ -74,10 +73,6 @@ export function TaskDetailPage() {
     setIsDeleteModalOpen(true);
   };
 
-  const handleTaskToggleCompletion = (taskId: number) => {
-    taskToggleCompleeteMutation.mutate(taskId);
-  };
-
   return (
     <>
       <TaskDetail
@@ -85,7 +80,6 @@ export function TaskDetailPage() {
         labels={labels}
         categories={categories}
         onEdit={handleEditClick}
-        onToggleCompletion={handleTaskToggleCompletion}
         onDelete={handleDeleteClick}
       />
 

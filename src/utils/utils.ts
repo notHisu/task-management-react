@@ -1,18 +1,14 @@
-import { Label } from "../types/Label";
-
-// Format date utility function
 export const formatDate = (dateString?: string) => {
   if (!dateString) return "";
   const date = new Date(dateString);
-  return new Intl.DateTimeFormat("en-US", {
+  return date.toLocaleString("vi-VN", {
     month: "short",
     day: "numeric",
     year: "numeric",
     hour: "2-digit",
     minute: "2-digit",
-  }).format(date);
+  });
 };
-
 // Time ago formatting
 export const getTimeSince = (dateString?: string) => {
   if (!dateString) return "";
@@ -42,23 +38,44 @@ export const bytesToSize = (bytes: number) => {
   return Math.round(bytes / Math.pow(1024, i)) + " " + sizes[i];
 };
 
-export function processLabelColor(color?: string, opacity: string = "33") {
-  // Generate color code (adding # if needed)
-  const colorHex = color?.startsWith("#") ? color : `#${color || "808080"}`;
+export function processLabelColor(color?: string, opacity: number = 0.2) {
+  // Default to gray if no color provided
+  if (!color) color = "808080";
 
-  // Calculate light background with specified opacity
-  const bgColor = `${colorHex}${opacity}`;
+  // Remove # if present
+  let cleanColor = color.startsWith("#") ? color.substring(1) : color;
 
-  // Calculate text color based on background brightness
-  const r = parseInt(colorHex.slice(1, 3) || "80", 16);
-  const g = parseInt(colorHex.slice(3, 5) || "80", 16);
-  const b = parseInt(colorHex.slice(5, 7) || "80", 16);
+  // Convert 3-digit hex to 6-digit hex if needed
+  if (cleanColor.length === 3) {
+    cleanColor = cleanColor
+      .split("")
+      .map((c) => c + c)
+      .join("");
+  }
+
+  // Ensure we have a valid 6-digit hex
+  if (!/^[0-9A-Fa-f]{6}$/.test(cleanColor)) {
+    cleanColor = "808080"; // Fallback to gray if invalid
+  }
+
+  // Add # prefix for standard format
+  const colorHex = "#" + cleanColor;
+
+  // Parse RGB values
+  const r = parseInt(cleanColor.substring(0, 2), 16);
+  const g = parseInt(cleanColor.substring(2, 4), 16);
+  const b = parseInt(cleanColor.substring(4, 6), 16);
+
+  // Calculate background color with opacity using rgba
+  const bgColor = `rgba(${r}, ${g}, ${b}, ${opacity})`;
+
+  // Calculate text color based on brightness
   const brightness = (r * 299 + g * 587 + b * 114) / 1000;
-  const textColor = brightness > 128 ? "#1F2937" : "#FFFFFF";
+  const textColor = brightness > 0 ? "#000000" : "#FFFFFF";
 
   return {
-    colorHex, // The normalized hex color with # prefix
-    bgColor, // Background color with opacity
-    textColor, // Contrasting text color
+    colorHex,
+    bgColor,
+    textColor,
   };
 }

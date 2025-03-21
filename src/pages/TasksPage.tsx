@@ -1,4 +1,14 @@
 import { useState } from "react";
+import { FaTasks, FaPlus } from "react-icons/fa";
+import { ConfirmationModal } from "../components/common/ConfirmationModal";
+import { Modal } from "../components/common/Modal";
+import { EditTaskForm } from "../components/tasks/EditTaskForm";
+import { TaskFilters } from "../components/tasks/TaskFilters";
+import { TaskForm } from "../components/tasks/TaskForm";
+import { TaskList } from "../components/tasks/TaskList";
+import { TaskSorter } from "../components/tasks/TaskSorter";
+import { useCategories } from "../hooks/useCategories";
+import { useLabels } from "../hooks/useLabels";
 import {
   useTasks,
   useTaskToggleCompletion,
@@ -6,16 +16,6 @@ import {
   useTaskDelete,
 } from "../hooks/useTasks";
 import { useTaskWithLabelsCreate } from "../hooks/useTaskWithLabelsCreate";
-import { useCategories } from "../hooks/useCategories";
-import { useLabels } from "../hooks/useLabels";
-import { TaskList } from "../components/tasks/TaskList";
-import { TaskFilters } from "../components/tasks/TaskFilters";
-import { TaskSorter } from "../components/tasks/TaskSorter";
-import { TaskForm } from "../components/tasks/TaskForm";
-import { EditTaskForm } from "../components/tasks/EditTaskForm";
-import { Modal } from "../components/common/Modal";
-import { ConfirmationModal } from "../components/common/ConfirmationModal";
-import { FaTasks, FaPlus } from "react-icons/fa";
 import { TaskFormData } from "../schemas/taskSchema";
 import { Task } from "../types/Task";
 

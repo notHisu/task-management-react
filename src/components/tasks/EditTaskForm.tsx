@@ -1,27 +1,26 @@
-import { useState, useEffect, useRef } from "react";
-import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { taskSchema, TaskFormData } from "../../schemas/taskSchema";
-import { useCategories } from "../../hooks/useCategories";
-import { useLabels } from "../../hooks/useLabels";
-import Button from "../common/Button";
+import { formatDistanceToNow } from "date-fns";
+import { AnimatePresence, motion } from "framer-motion";
+import { useState, useRef, useEffect } from "react";
+import DatePicker from "react-datepicker";
+import { useForm, Controller } from "react-hook-form";
 import {
-  FaCalendarAlt,
-  FaExclamationTriangle,
-  FaFlag,
-  FaSave,
-  FaTimes,
-  FaUndo,
   FaHistory,
   FaInfoCircle,
+  FaExclamationTriangle,
   FaEdit,
   FaEye,
+  FaCalendarAlt,
+  FaFlag,
+  FaUndo,
+  FaTimes,
+  FaSave,
 } from "react-icons/fa";
-import DatePicker from "react-datepicker";
-import "react-datepicker/dist/react-datepicker.css";
+import { useCategories } from "../../hooks/useCategories";
+import { useLabels } from "../../hooks/useLabels";
+import { TaskFormData, taskSchema } from "../../schemas/taskSchema";
 import { Task } from "../../types/Task";
-import { AnimatePresence, motion } from "framer-motion";
-import { formatDistanceToNow } from "date-fns";
+import Button from "../common/Button";
 import { MarkdownRenderer } from "../common/MarkdownRenderer";
 
 interface EditTaskFormProps {
@@ -83,6 +82,8 @@ export function EditTaskForm({
   const categoryId = watch("categoryId");
   const isCompleted = watch("isCompleted");
   const labelIds = watch("labelIds");
+
+  console.log("initialData", initialData);
 
   useEffect(() => {
     const changes: Record<string, boolean> = {};

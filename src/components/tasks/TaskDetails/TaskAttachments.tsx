@@ -1,14 +1,15 @@
 import { useState, useRef } from "react";
-import { FaPaperclip, FaTrash, FaDownload, FaPlus } from "react-icons/fa";
+import { FaPaperclip, FaDownload, FaTrash, FaPlus } from "react-icons/fa";
 import {
   useTaskAttachments,
   useUploadTaskAttachment,
   useDeleteTaskAttachment,
   useDownloadAttachment,
-} from "../../hooks/useTaskAttachments";
-import { bytesToSize } from "../../utils/utils";
-import { TaskAttachment } from "../../types/Attachment";
-import { getFileIcon } from "../../utils/fileIcons";
+} from "../../../hooks/useTaskAttachments";
+import { TaskAttachment } from "../../../types/Attachment";
+import { getFileIcon } from "../../../utils/fileIcons";
+import { bytesToSize } from "../../../utils/utils";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface TaskAttachmentsProps {
   taskId: number;
@@ -19,6 +20,7 @@ export function TaskAttachments({
   taskId,
   readOnly = false,
 }: TaskAttachmentsProps) {
+  const queryClient = useQueryClient();
   const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -66,6 +68,7 @@ export function TaskAttachments({
   const handleDeleteAttachment = (attachmentId: number) => {
     if (window.confirm("Are you sure you want to delete this attachment?")) {
       deleteMutation.mutate({ taskId, attachmentId });
+      queryClient.invalidateQueries({ queryKey: ["taskAttachments", taskId] });
     }
   };
 
@@ -74,7 +77,7 @@ export function TaskAttachments({
   };
 
   return (
-    <div className="bg-gray-50 rounded-lg p-4 border border-gray-100">
+    <div className="bg-white rounded-lg shadow-sm p-4 border border-gray-200">
       <h3 className="text-sm font-medium text-gray-700 mb-3 flex items-center">
         <FaPaperclip className="w-4 h-4 mr-1.5 text-gray-500" />
         Attachments
@@ -95,7 +98,7 @@ export function TaskAttachments({
             >
               <div className="flex items-center overflow-hidden">
                 {getFileIcon(attachment.fileType)}
-                <div className="truncate">
+                <div className="truncate ml-2">
                   <p
                     className="text-sm font-medium text-gray-700 truncate"
                     title={attachment.fileName}
@@ -103,7 +106,7 @@ export function TaskAttachments({
                     {attachment.fileName}
                   </p>
                   <p className="text-xs text-gray-500">
-                    {bytesToSize(attachment.fileSize)} •
+                    {bytesToSize(attachment.fileSize)} •{" "}
                     {new Date(attachment.uploadedAt!).toLocaleString()}
                   </p>
                 </div>

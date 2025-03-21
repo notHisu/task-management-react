@@ -11,6 +11,7 @@ import {
   FaChevronUp,
   FaSearch,
 } from "react-icons/fa";
+import { processLabelColor } from "../../utils/utils";
 
 interface TaskFiltersProps {
   labels?: Label[];
@@ -261,24 +262,9 @@ export function TaskFilters({
               {labels?.map((label) => {
                 const isSelected = selectedLabels.includes(label.id!);
 
-                // Get color from database or use fallback
-                const colorHex = label.color?.startsWith("#")
-                  ? label.color
-                  : `#${label.color || "808080"}`; // Default to gray if no color
-
-                // Calculate appropriate opacity for background
-                const bgColor = isSelected ? colorHex : `${colorHex}20`; // 20% opacity for unselected
-
-                // Calculate text color based on background brightness
-                const r = parseInt(colorHex.slice(1, 3) || "80", 16);
-                const g = parseInt(colorHex.slice(3, 5) || "80", 16);
-                const b = parseInt(colorHex.slice(5, 7) || "80", 16);
-                const brightness = (r * 299 + g * 587 + b * 114) / 1000;
-                const textColor = isSelected
-                  ? brightness > 128
-                    ? "#1F2937"
-                    : "#FFFFFF" // Darker text on light bg, white on dark
-                  : colorHex; // Use the label color for text when unselected
+                const { colorHex, bgColor, textColor } = processLabelColor(
+                  label.color
+                );
 
                 return (
                   <button

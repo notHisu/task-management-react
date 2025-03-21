@@ -11,11 +11,7 @@ import {
   FaTrash,
 } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
-import {
-  formatDate,
-  getLabelColorClass,
-  processLabelColor,
-} from "../../utils/utils";
+import { formatDate, processLabelColor } from "../../utils/utils";
 
 interface TaskItemProps {
   task: Task;
