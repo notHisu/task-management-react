@@ -8,6 +8,8 @@ export interface AuthTokens {
 }
 
 export interface User {
+  id: number;
+  name: string;
   email: string;
   token?: AuthTokens;
 }

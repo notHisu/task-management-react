@@ -1,32 +1,17 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import {
-  userCreateSchema,
-  UserCreateSchema,
-} from "../../../schemas/userSchema";
+import { UserCreateSchema } from "../../../schemas/userSchema";
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 import Button from "../Button";
 import FormField from "./FormField";
 import AuthError from "../AuthError";
 import FormContainer from "./FormContainer";
-import { z } from "zod";
 import { useAuth } from "../../../hooks/useAuth";
-
-// Extended schema with password confirmation
-const registerFormSchema = userCreateSchema
-  .extend({
-    confirmPassword: z
-      .string()
-      .min(1, { message: "Confirm password is required" }),
-  })
-  .refine((data) => data.password === data.confirmPassword, {
-    message: "Passwords don't match",
-    path: ["confirmPassword"],
-  });
-
-// Type for the extended schema
-type RegisterFormSchema = z.infer<typeof registerFormSchema>;
+import {
+  registerFormSchema,
+  RegisterFormSchema,
+} from "../../../schemas/registerSchema";
 
 export default function RegisterForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);

@@ -40,6 +40,7 @@ export function Sidebar({ isOpen, onToggle }: SidebarProps) {
   // Reset menu expansion state when route changes (mobile)
   useEffect(() => {
     if (window.innerWidth < 768) {
+      // eslint-disable-next-line @typescript-eslint/no-unused-expressions
       onToggle && !isOpen && onToggle();
     }
   }, [currentPath, onToggle, isOpen]);
@@ -48,13 +49,6 @@ export function Sidebar({ isOpen, onToggle }: SidebarProps) {
     if (!user) return;
     await logout();
     navigate("/login");
-  };
-
-  const toggleSection = (section: string) => {
-    setMenuSections((prev) => ({
-      ...prev,
-      [section]: !prev[section],
-    }));
   };
 
   const isActive = (path: string) => {

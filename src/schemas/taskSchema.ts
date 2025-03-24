@@ -9,6 +9,7 @@ export const taskSchema = z.object({
   labelIds: z.array(z.number()).optional(),
   dueDate: z.string().nullable().optional(),
   priority: z.string().nullable().optional(),
+  createdAt: z.string().nullable().optional(),
 });
 
 export type TaskFormData = z.infer<typeof taskSchema>;

@@ -1,9 +1,11 @@
+import { UseFormRegister } from "react-hook-form";
+
 interface FormFieldProps {
   label: string;
   id: string;
   type: string;
   error?: string;
-  register: unknown;
+  register: UseFormRegister<any>;
   name: string;
 }
 

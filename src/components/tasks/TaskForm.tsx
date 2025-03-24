@@ -15,6 +15,7 @@ import {
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { MarkdownRenderer } from "../common/MarkdownRenderer";
+import { processLabelColor } from "../../utils/utils";
 
 interface TaskFormProps {
   onSubmit: (data: TaskFormData) => void;
@@ -312,28 +313,16 @@ export function TaskForm({
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 {labels?.map((label) => {
                   const isSelected = field.value?.includes(Number(label.id));
-
-                  let bgColor = isSelected ? "bg-indigo-500" : "bg-white";
-                  let textColor = isSelected ? "text-white" : "text-gray-700";
-
-                  if (isSelected) {
-                    if (label.id === 1) bgColor = "bg-red-500";
-                    else if (label.id === 2) bgColor = "bg-blue-500";
-                    else if (label.id === 3) bgColor = "bg-green-500";
-                    else if (label.id === 4) bgColor = "bg-yellow-500";
-                  } else {
-                    if (label.id === 1) textColor = "text-red-700";
-                    else if (label.id === 2) textColor = "text-blue-700";
-                    else if (label.id === 3) textColor = "text-green-700";
-                    else if (label.id === 4) textColor = "text-yellow-700";
-                  }
+                  const { colorHex, bgColor, textColor } = processLabelColor(
+                    label.color || ""
+                  );
 
                   return (
                     <label
                       key={label.id}
                       className={`flex items-center gap-2 p-2 rounded-md cursor-pointer transition-all ${
                         isSelected
-                          ? `${bgColor} ${textColor}`
+                          ? `bg-opacity-80 ${bgColor} ${textColor}`
                           : `hover:bg-gray-100 ${textColor}`
                       }`}
                     >

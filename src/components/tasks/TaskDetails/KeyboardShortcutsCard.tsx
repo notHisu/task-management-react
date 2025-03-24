@@ -3,7 +3,7 @@ import { FaKeyboard } from "react-icons/fa";
 import { motion, AnimatePresence } from "framer-motion";
 
 export function KeyboardShortcutsCard() {
-  const [showKeyboardShortcuts, setShowKeyboardShortcuts] = useState(false);
+  const [showKeyboardShortcuts, setShowKeyboardShortcuts] = useState(true);
 
   return (
     <div className="bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">

@@ -7,20 +7,22 @@ import { deleteCookie } from "../utils/cookieUtils";
 export const useAuthStore = create<AuthState>()(
   persist(
     (set) => ({
+      id: null,
       user: null,
       isLoading: false,
       error: null,
 
       login: async (
         credentials: UserLoginSchema,
-        loginFn: (creds: UserLoginSchema) => Promise<AuthTokens> // ✅ Function that returns a Promise
+        loginFn: (creds: UserLoginSchema) => Promise<AuthTokens>
       ) => {
         set({ isLoading: true, error: null });
         try {
-          const token = await loginFn(credentials); // Now this works!
-
+          const token = await loginFn(credentials);
           set({
             user: {
+              id: 1,
+              name: "John Doe",
               email: credentials.email,
               token: token,
             },

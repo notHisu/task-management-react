@@ -17,11 +17,7 @@ interface CommentFormProps {
   isLoading?: boolean;
 }
 
-export function CommentForm({
-  taskId,
-  onSubmit,
-  isLoading = false,
-}: CommentFormProps) {
+export function CommentForm({ onSubmit, isLoading = false }: CommentFormProps) {
   const { user } = useAuthStore();
   const [content, setContent] = useState("");
   const [isFocused, setIsFocused] = useState(false);
@@ -69,7 +65,7 @@ export function CommentForm({
 
   // Get initial letter for avatar
   const getInitial = () => {
-    return user?.name?.charAt(0) || user?.email?.charAt(0) || "U";
+    return user?.email?.charAt(0) || "U";
   };
 
   return (
