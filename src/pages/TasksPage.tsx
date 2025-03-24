@@ -19,11 +19,13 @@ import { useTaskWithLabelsCreate } from "../hooks/useTaskWithLabelsCreate";
 import { TaskFormData } from "../schemas/taskSchema";
 import { Task } from "../types/Task";
 
+type SortBy = "date" | "status" | "title";
+
 export function TasksPage() {
   const [selectedCategory, setSelectedCategory] = useState<number | null>(null);
   const [showCompleted, setShowCompleted] = useState(true);
   const [selectedLabels, setSelectedLabels] = useState<number[]>([]);
-  const [sortBy, setSortBy] = useState<"date" | "status">("date");
+  const [sortBy, setSortBy] = useState<SortBy>("date");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);

@@ -13,8 +13,10 @@ import { ConfirmationModal } from "../components/common/ConfirmationModal";
 import { Task } from "../types/Task";
 import { TaskFormData } from "../schemas/taskSchema";
 import { EditTaskForm } from "../components/tasks/EditTaskForm";
+import { useQueryClient } from "@tanstack/react-query";
 
 export function TaskDetailPage() {
+  const queryClient = useQueryClient();
   const { taskId } = useParams<{ taskId: string }>();
   const taskIdNum = parseInt(taskId || "0");
   const navigate = useNavigate();

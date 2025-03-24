@@ -160,6 +160,14 @@ export function TaskItem({
           )}
         </div>
 
+        {/* Display due date if it exists */}
+        {task.dueDate && (
+          <div className="text-sm text-gray-500 flex items-center gap-1">
+            <FaCalendarAlt className="text-gray-400" />
+            Due {formatDate(task.dueDate)}
+          </div>
+        )}
+
         {/* Progress indicator for completed tasks */}
         {task.isCompleted && (
           <span className="text-xs text-green-600 font-medium flex items-center">

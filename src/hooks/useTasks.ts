@@ -42,6 +42,8 @@ export const useTaskToggleCompletion = () => {
         categoryId: currentTask.categoryId,
         title: currentTask.title,
         description: currentTask.description,
+        dueDate: currentTask.dueDate,
+        priority: currentTask.priority,
       };
 
       const url = `/api/Task/${taskId}`;
